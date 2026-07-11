@@ -139,6 +139,7 @@
         mensajeUsuario.textContent = texto;
 
         chatArea.appendChild(mensajeUsuario);
+        chatArea.scrollTop = chatArea.scrollHeight;
 
         input.value = '';
             setTimeout(function() {
@@ -187,6 +188,7 @@
     }
 
     chatArea.appendChild(respuesta);
+    chatArea.scrollTop = chatArea.scrollHeight;
 
 }, 800);
     }
