@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente Virtual | Ayuntamiento de Laguna Salada</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .chatbot {
+            width: 380px;
+            height: 600px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.15);
+            overflow: au;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: #075e54;
+            color: white;
+            padding: 20px;
+        }
+
+        .header h2 {
+            margin: 0 0 5px;
+            font-size: 20px;
+        }
+
+        .header p {
+            margin: 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+         .chat-area {
+    flex: 1;
+    padding: 20px;
+    background: #eef2f3;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+        .message {
+            background: white;
+            padding: 12px 15px;
+            border-radius: 15px 15px 15px 4px;
+            max-width: 80%;
+            line-height: 1.4;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+        }
+
+        .input-area {
+            display: flex;
+            padding: 12px;
+            background: white;
+            border-top: 1px solid #ddd;
+        }
+
+        .input-area input {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 10px 15px;
+            outline: none;
+        }
+
+        .input-area button {
+            margin-left: 8px;
+            border: none;
+            background: #075e54;
+            color: white;
+            border-radius: 20px;
+            padding: 10px 16px;
+            cursor: pointer;
+        }
+        .user-message {
+    background: #075e54;
+    color: white;
+    padding: 12px 15px;
+    border-radius: 15px 15px 4px 15px;
+    max-width: 75%;
+    margin: 12px 0 12px auto;
+    line-height: 1.4;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+    word-wrap: break-word;
+}
+    </style>
+</head>
+
+<body>
+
+    <div class="chatbot">
+
+        <div class="header">
+            <h2>🏛️ Ayuntamiento de Laguna Salada</h2>
+            <p>Asistente Virtual Municipal • En línea</p>
+        </div>
+
+        <div class="chat-area">
+            <div class="message">
+                👋 ¡Hola! Soy el asistente virtual del Ayuntamiento Municipal de Laguna Salada.
+                <br><br>
+                ¿En qué puedo ayudarte hoy?
+            </div>
+        </div>
+
+        <div class="input-area">
+            <input type="text" placeholder="Escribe tu pregunta...">
+            <button>Enviar</button>
+        </div>
+
+    </div>
+<script>
+    const input = document.querySelector('.input-area input');
+    const button = document.querySelector('.input-area button');
+    const chatArea = document.querySelector('.chat-area');
+
+    let esperandoSector = false;
+
+    function enviarMensaje() {
+        const texto = input.value.trim();
+
+        if (texto === '') return;
+
+        const mensajeUsuario = document.createElement('div');
+        mensajeUsuario.classList.add('user-message');
+        mensajeUsuario.textContent = texto;
+
+        chatArea.appendChild(mensajeUsuario);
+
+        input.value = '';
+            setTimeout(function() {
+    const respuesta = document.createElement('div');
+    respuesta.classList.add('message');
+
+    const pregunta = texto.toLowerCase();
+
+    if (esperandoSector) {
+    respuesta.textContent =
+        '📍 Gracias, he registrado tu sector o comunidad como: ' + texto + '. Próximamente podré consultar la ruta y el horario correspondiente.';
+    esperandoSector = false;
+
+} else if (
+    pregunta.includes('basura') ||
+    pregunta.includes('recogida') ||
+    pregunta.includes('camion')
+) {
+    respuesta.textContent =
+        '🗑️ Para consultar el día de recogida de basura, indícame tu sector o comunidad.';
+    esperandoSector = true;
+    
+        respuesta.textContent =
+            '🗑️ Para consultar el día de recogida de basura, indícame tu sector o comunidad.';
+            esperandoSector = true;
+
+    } else if (
+        pregunta.includes('horario') ||
+        pregunta.includes('hora') ||
+        pregunta.includes('abren')
+    ) {
+        respuesta.textContent =
+            '🕒 El Ayuntamiento Municipal de Laguna Salada ofrece atención al ciudadano en horario laboral. ¿Deseas consultar el horario de una oficina o departamento específico?';
+
+    } else if (
+        pregunta.includes('contacto') ||
+        pregunta.includes('telefono') ||
+        pregunta.includes('llamar')
+    ) {
+        respuesta.textContent =
+            '📞 Puedo ayudarte a encontrar la información de contacto del Ayuntamiento o del departamento que necesites. ¿Con cuál deseas comunicarte?';
+
+    } else {
+        respuesta.textContent =
+            '🤖 Puedo ayudarte con información sobre recogida de basura, horarios y contacto con el Ayuntamiento. ¿Sobre cuál de estos temas deseas consultar?';
+    }
+
+    chatArea.appendChild(respuesta);
+
+}, 800);
+    }
+
+    button.addEventListener('click', enviarMensaje);
+
+    input.addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            enviarMensaje();
+        }
+    });
+</script>
+</body>
+</html>
