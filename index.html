@@ -153,6 +153,28 @@
     object-fit: cover;
     border-radius: 10px;
 }
+.selection-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.selection-options button {
+    border: 1px solid #075e54;
+    background: white;
+    color: #075e54;
+    border-radius: 18px;
+    padding: 9px 13px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: 0.2s;
+}
+
+.selection-options button:hover {
+    background: #075e54;
+    color: white;
+}
     </style>
 </head>
 
@@ -208,6 +230,7 @@ let fotoSeleccionada = null;
 
 let datosReporte = {
     categoria: '',
+    sector: '',
     ubicacion: '',
     descripcion: '',
     foto: false
@@ -295,6 +318,7 @@ function generarTicket() {
         '🎫 REPORTE CREADO EXITOSAMENTE\n\n' +
         'Ticket: ' + numeroTicket + '\n' +
         'Categoría: ' + datosReporte.categoria + '\n' +
+        'Sector: ' + datosReporte.sector + '\n' +
         'Ubicación: ' + datosReporte.ubicacion + '\n' +
         'Descripción: ' + datosReporte.descripcion + '\n' +
         evidencia + '\n' +
@@ -308,12 +332,110 @@ function generarTicket() {
 
     datosReporte = {
         categoria: '',
+        sector: '',
         ubicacion: '',
         descripcion: '',
         foto: false
     };
 }
+function mostrarCategoriasReporte() {
+    const contenedor = document.createElement('div');
+    contenedor.classList.add('selection-options');
 
+    const categorias = [
+        '🗑️ Basura acumulada',
+        '💡 Luminaria dañada',
+        '🛣️ Calle deteriorada',
+        '🌳 Árbol caído',
+        '🚧 Obstrucción de vía',
+        '➕ Otro problema municipal'
+    ];
+
+    categorias.forEach(function(categoria) {
+        const boton = document.createElement('button');
+        boton.textContent = categoria;
+
+        boton.addEventListener('click', function() {
+            datosReporte.categoria = categoria;
+            contenedor.remove();
+
+            agregarMensaje(categoria, 'usuario');
+
+            setTimeout(function() {
+                agregarMensaje(
+                    '📍 Ahora selecciona el sector de Laguna Salada donde está ocurriendo el problema.',
+                    'asistente'
+                );
+
+                mostrarSectoresReporte();
+            }, 400);
+        });
+
+        contenedor.appendChild(boton);
+    });
+
+    chatArea.appendChild(contenedor);
+    chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+
+function mostrarSectoresReporte() {
+    const contenedor = document.createElement('div');
+    contenedor.classList.add('selection-options');
+
+    const sectores = [
+        'San Antonio',
+        'Puerto Rico',
+        'La Curva',
+        'Pueblo Nuevo',
+        'Las Flores',
+        'Alto de La Hicotea',
+        'Otro sector de Laguna Salada'
+    ];
+
+    sectores.forEach(function(sector) {
+        const boton = document.createElement('button');
+        boton.textContent = '📍 ' + sector;
+
+        boton.addEventListener('click', function() {
+            contenedor.remove();
+
+            if (sector === 'Otro sector de Laguna Salada') {
+                estadoReporte = 'esperandoOtroSector';
+
+                agregarMensaje(
+                    '📍 Otro sector de Laguna Salada',
+                    'usuario'
+                );
+
+                setTimeout(function() {
+                    agregarMensaje(
+                        '✍️ Escribe el nombre del sector. Esta instancia solo gestiona reportes correspondientes a la jurisdicción directa de Laguna Salada.',
+                        'asistente'
+                    );
+                }, 400);
+
+            } else {
+                datosReporte.sector = sector;
+                estadoReporte = 'esperandoUbicacion';
+
+                agregarMensaje('📍 ' + sector, 'usuario');
+
+                setTimeout(function() {
+                    agregarMensaje(
+                        '📌 Perfecto. Ahora indícame la calle, número, intersección o un punto de referencia donde está ocurriendo el problema.',
+                        'asistente'
+                    );
+                }, 400);
+            }
+        });
+
+        contenedor.appendChild(boton);
+    });
+
+    chatArea.appendChild(contenedor);
+    chatArea.scrollTop = chatArea.scrollHeight;
+}
     function enviarMensaje() {
     const texto = input.value.trim();
 
@@ -328,14 +450,45 @@ function generarTicket() {
         let respuesta = '';
 
         // PASO 1: Esperando categoría del reporte
-        if (estadoReporte === 'esperandoCategoria') {
+        if (estadoReporte === 'esperandoOtroSector') {
 
-            datosReporte.categoria = texto;
-            estadoReporte = 'esperandoUbicacion';
+    const sectorIngresado = texto.toLowerCase();
 
-            respuesta =
-                '📍 Gracias. Ahora indícame dónde está ocurriendo el problema. Puedes escribir el sector, calle o un punto de referencia.';
+    const jurisdiccionesExternas = [
+        'la caya',
+        'jaibon',
+        'jaibón',
+        'cruce de guayacanes',
+        'guayacanes'
+    ];
 
+    const fueraDeJurisdiccion = jurisdiccionesExternas.some(function(lugar) {
+        return sectorIngresado.includes(lugar);
+    });
+
+    if (fueraDeJurisdiccion) {
+        respuesta =
+            '⚠️ La ubicación indicada no corresponde a la jurisdicción directa atendida por el Ayuntamiento Municipal de Laguna Salada.\n\n' +
+            'Esta instancia del asistente gestiona exclusivamente reportes correspondientes a Laguna Salada y sus sectores.\n\n' +
+            'El reporte no ha sido generado.';
+
+        estadoReporte = null;
+
+        datosReporte = {
+            categoria: '',
+            sector: '',
+            ubicacion: '',
+            descripcion: '',
+            foto: false
+        };
+
+    } else {
+        datosReporte.sector = texto;
+        estadoReporte = 'esperandoUbicacion';
+
+        respuesta =
+            '📌 Gracias. Ahora indícame la calle, número, intersección o un punto de referencia donde está ocurriendo el problema.';
+    }
         // PASO 2: Esperando ubicación
         } else if (estadoReporte === 'esperandoUbicacion') {
 
@@ -357,7 +510,7 @@ function generarTicket() {
     setTimeout(function() {
         mostrarOpcionesFoto();
     }, 300);
-    
+
         } else if (esperandoSector) {
 
             respuesta =
@@ -443,18 +596,21 @@ function generarTicket() {
 
         // INICIAR REPORTE
         } else if (
-            pregunta.includes('reportar') ||
-            pregunta.includes('reporte') ||
-            pregunta.includes('problema') ||
-            pregunta.includes('incidencia')
-        ) {
+    pregunta.includes('reportar') ||
+    pregunta.includes('reporte') ||
+    pregunta.includes('problema') ||
+    pregunta.includes('incidencia')
+) {
 
-            estadoReporte = 'esperandoCategoria';
+    estadoReporte = 'seleccionandoCategoria';
 
-            respuesta =
-                '🚨 Claro. Vamos a crear un reporte ciudadano.\n\n' +
-                '¿Qué tipo de problema deseas reportar?\n\n' +
-                'Por ejemplo: basura acumulada, luminaria dañada, calle deteriorada, árbol caído u otro problema municipal.';
+    respuesta =
+        '🚨 Claro. Vamos a crear un reporte ciudadano.\n\n' +
+        'Selecciona el tipo de problema que deseas reportar:';
+
+    setTimeout(function() {
+        mostrarCategoriasReporte();
+    }, 300);
 
         // SALUDO
         } else if (
