@@ -198,6 +198,40 @@
     background: #075e54;
     color: white;
 }
+
+.lugar-card {
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+    margin: 12px 0;
+    max-width: 340px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+}
+
+.lugar-card img {
+    width: 100%;
+    height: 190px;
+    object-fit: cover;
+    display: block;
+}
+
+.lugar-card-content {
+    padding: 14px;
+}
+
+.lugar-card-content h3 {
+    margin: 0 0 8px;
+    color: #075e54;
+    font-size: 17px;
+}
+
+.lugar-card-content p {
+    margin: 0;
+    color: #444;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
     </style>
 </head>
 
@@ -258,6 +292,14 @@
 
     let esperandoSector = false;
     
+    const sectoresLagunaSalada = [
+    'San Antonio',
+    'Puerto Rico',
+    'La Curva',
+    'Pueblo Nuevo',
+    'Las Flores',
+    'Alto de La Hicotea'
+];
     let estadoReporte = null;
 let fotoSeleccionada = null;
 
@@ -417,14 +459,9 @@ function mostrarSectoresReporte() {
     contenedor.classList.add('selection-options');
 
     const sectores = [
-        'San Antonio',
-        'Puerto Rico',
-        'La Curva',
-        'Pueblo Nuevo',
-        'Las Flores',
-        'Alto de La Hicotea',
-        'Otro sector de Laguna Salada'
-    ];
+    ...sectoresLagunaSalada,
+    'Otro sector de Laguna Salada'
+];
 
     sectores.forEach(function(sector) {
         const boton = document.createElement('button');
@@ -545,6 +582,90 @@ function volverMenuPrincipal() {
 
     chatArea.scrollTop = chatArea.scrollHeight;
 }
+function mostrarLugarEmblematico(nombre, imagen, descripcion) {
+
+    const tarjeta = document.createElement('div');
+    tarjeta.classList.add('lugar-card');
+
+    tarjeta.innerHTML = `
+        <img src="${imagen}" alt="${nombre}">
+        <div class="lugar-card-content">
+            <h3>${nombre}</h3>
+            <p>${descripcion}</p>
+        </div>
+    `;
+
+    chatArea.appendChild(tarjeta);
+    chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function mostrarMenuLugares() {
+
+    const contenedor = document.createElement('div');
+    contenedor.classList.add('selection-options');
+
+    const lugares = [
+        '🌳 Parque Municipal Máximo Gómez',
+        '🏛️ Palacio Municipal',
+        '⛪ Parroquia San Antonio de Padua',
+        '🪦 Cementerio Municipal'
+    ];
+
+    lugares.forEach(function(lugar) {
+
+        const boton = document.createElement('button');
+        boton.textContent = lugar;
+
+        boton.addEventListener('click', function() {
+
+            contenedor.remove();
+            agregarMensaje(lugar, 'usuario');
+
+            setTimeout(function() {
+
+                if (lugar === '🌳 Parque Municipal Máximo Gómez') {
+
+                    mostrarLugarEmblematico(
+                        'Parque Municipal Mirador del Valle “Máximo Gómez”',
+                        'images/parque-maximo-gomez.png',
+                        'Uno de los principales espacios públicos de Laguna Salada, dedicado al encuentro, la recreación y la convivencia de la comunidad.'
+                    );
+
+                } else if (lugar === '🏛️ Palacio Municipal') {
+
+                    mostrarLugarEmblematico(
+                        'Palacio Municipal de Laguna Salada',
+                        'images/palacio-municipal.png',
+                        'Sede del gobierno local y centro de la administración municipal de Laguna Salada, provincia Valverde.'
+                    );
+
+                } else if (lugar === '⛪ Parroquia San Antonio de Padua') {
+
+                    mostrarLugarEmblematico(
+                        'Parroquia San Antonio de Padua',
+                        'images/parroquia-san-antonio.png',
+                        'Espacio religioso vinculado a la vida espiritual y comunitaria de Laguna Salada y a la tradición de San Antonio de Padua.'
+                    );
+
+                } else if (lugar === '🪦 Cementerio Municipal') {
+
+                    mostrarLugarEmblematico(
+                        'Cementerio Municipal de Laguna Salada',
+                        'images/cementerio-municipal.jpeg',
+                        'Espacio municipal destinado al descanso y memoria de los seres queridos de la comunidad de Laguna Salada.'
+                    );
+                }
+
+            }, 300);
+        });
+
+        contenedor.appendChild(boton);
+    });
+
+    chatArea.appendChild(contenedor);
+    chatArea.scrollTop = chatArea.scrollHeight;
+}
+
 
     function enviarMensaje() {
     const texto = input.value.trim();
@@ -650,10 +771,12 @@ function volverMenuPrincipal() {
 ) {
 
     respuesta =
-        '📜 HISTORIA DE LAGUNA SALADA\n\n' +
-        'Laguna Salada es un municipio de la provincia Valverde, en la región noroeste de la República Dominicana.\n\n' +
-        'Su desarrollo histórico ha estado estrechamente vinculado a la agricultura, el comercio y el crecimiento de sus comunidades.\n\n' +
-        '🏛️ Esta sección podrá ampliarse con acontecimientos históricos, fechas importantes, personalidades destacadas y material del archivo municipal.';
+         '📜 HISTORIA DE LAGUNA SALADA\n\n' +
+        'Laguna Salada es uno de los tres municipios de la provincia Valverde, ubicado en la región Cibao Noroeste de la República Dominicana.\n\n' +
+        '🏛️ Fue constituido como municipio mediante la Ley 916, promulgada el 12 de agosto de 1978.\n\n' +
+        '📍 Limita al norte con la provincia Puerto Plata, al sur con Santa Cruz de Mao, al este con Esperanza y al oeste con la provincia Monte Cristi.\n\n' +
+        'Su desarrollo ha estado estrechamente relacionado con la agricultura, el comercio y el crecimiento de sus comunidades.';
+
 
 // LUGARES EMBLEMÁTICOS
 } else if (
@@ -662,14 +785,14 @@ function volverMenuPrincipal() {
 ) {
 
     respuesta =
-        '📸 LUGARES EMBLEMÁTICOS DE LAGUNA SALADA\n\n' +
-        'Estamos preparando una experiencia visual para conocer espacios representativos del municipio, entre ellos:\n\n' +
-        '🌳 Parque Central\n' +
-        '🏛️ Ayuntamiento Municipal\n' +
-        '⛪ Templos y espacios religiosos\n' +
-        '🪦 Cementerio Municipal\n' +
-        '📍 Otros lugares de interés comunitario\n\n' +
-        'Próximamente cada lugar podrá incluir fotografías, descripción, historia y ubicación.';
+       respuesta =
+    '📸 LUGARES EMBLEMÁTICOS DE LAGUNA SALADA\n\n' +
+    'Descubre algunos de los espacios representativos de nuestro municipio.\n\n' +
+    'Selecciona el lugar que deseas conocer:';
+
+setTimeout(function() {
+    mostrarMenuLugares();
+}, 300);
 
 // POBLACIÓN
 } else if (
@@ -678,10 +801,11 @@ function volverMenuPrincipal() {
 ) {
 
     respuesta =
-        '👥 POBLACIÓN DE LAGUNA SALADA\n\n' +
-        'Laguna Salada forma parte de la provincia Valverde, en la región noroeste de la República Dominicana.\n\n' +
-        '📊 Estamos validando la cifra oficial de población correspondiente específicamente a la demarcación que atiende esta instancia, para evitar mezclar los datos de Laguna Salada con los de distritos municipales que cuentan con gobiernos locales propios.\n\n' +
-        'La cifra oficial se incorporará utilizando datos territoriales y censales verificados.';
+         '👥 POBLACIÓN DE LAGUNA SALADA\n\n' +
+        'Según el X Censo Nacional de Población y Vivienda 2022 de la Oficina Nacional de Estadística (ONE), Laguna Salada cuenta con 10,627 habitantes.\n\n' +
+        '👩 Mujeres: 5,275\n' +
+        '👨 Hombres: 5,352\n\n' +
+        '📊 Esta información corresponde específicamente a Laguna Salada y se presenta separada de los distritos municipales de Jaibón, La Caya y Cruce de Guayacanes.';
 
 // ECONOMÍA
 } else if (
@@ -691,12 +815,13 @@ function volverMenuPrincipal() {
 
     respuesta =
         '💼 ECONOMÍA DE LAGUNA SALADA\n\n' +
-        'La actividad económica de Laguna Salada está vinculada principalmente a la agricultura, el comercio y los servicios locales.\n\n' +
-        '🌱 Agricultura\n' +
+        'La economía de Laguna Salada está fuertemente vinculada a la agricultura, el comercio y los servicios locales.\n\n' +
+        '🍌 La producción de banano tiene especial importancia, incluyendo producción destinada a la exportación.\n\n' +
+        '🌱 Agricultura y producción de frutos menores\n' +
         '🏪 Comercio local\n' +
         '🚚 Transporte y distribución\n' +
         '🛠️ Pequeños negocios y servicios\n\n' +
-        'Esta sección podrá ampliarse con información oficial sobre producción, empleo, emprendimiento y principales actividades económicas del municipio.';
+        'El desarrollo agrícola continúa siendo uno de los ejes estratégicos para el crecimiento económico del municipio.';
 
 // SECTORES Y BARRIOS
 } else if (
@@ -704,15 +829,15 @@ function volverMenuPrincipal() {
 ) {
 
     respuesta =
-        '🗺️ SECTORES Y BARRIOS DE LAGUNA SALADA\n\n' +
-        'Entre los sectores identificados para esta instancia se encuentran:\n\n' +
-        '📍 San Antonio\n' +
-        '📍 Puerto Rico\n' +
-        '📍 La Curva\n' +
-        '📍 Pueblo Nuevo\n' +
-        '📍 Las Flores\n' +
-        '📍 Alto de La Hicotea\n\n' +
-        '🏛️ Este asistente atiende exclusivamente información y reportes correspondientes a la jurisdicción directa del Ayuntamiento Municipal de Laguna Salada.';
+        respuesta =
+    '🗺️ SECTORES Y BARRIOS DE LAGUNA SALADA\n\n' +
+    'Entre los sectores identificados para esta instancia se encuentran:\n\n' +
+    sectoresLagunaSalada
+        .map(function(sector) {
+            return '📍 ' + sector;
+        })
+        .join('\n') +
+    '\n\n🏛️ Este asistente atiende exclusivamente información y reportes correspondientes a la jurisdicción directa del Ayuntamiento Municipal de Laguna Salada.';
 
 // INSTITUCIONES MUNICIPALES
 } else if (
