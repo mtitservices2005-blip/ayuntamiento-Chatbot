@@ -33,7 +33,7 @@
             padding: 20px;
         }
 
-        .header h2 {
+        .header h2 { 
             margin: 0 0 5px;
             font-size: 20px;
         }
@@ -96,6 +96,63 @@
     box-shadow: 0 2px 5px rgba(0,0,0,0.08);
     word-wrap: break-word;
 }
+.quick-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.quick-actions button {
+    border: 1px solid #075e54;
+    background: white;
+    color: #075e54;
+    border-radius: 18px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: 0.2s;
+}
+
+.quick-actions button:hover {
+    background: #075e54;
+    color: white;
+}
+.photo-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.photo-options button {
+    border: 1px solid #075e54;
+    background: white;
+    color: #075e54;
+    border-radius: 18px;
+    padding: 9px 13px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.photo-options button:hover {
+    background: #075e54;
+    color: white;
+}
+
+.image-message {
+    padding: 5px;
+    overflow: hidden;
+}
+
+.image-message img {
+    display: block;
+    width: 100%;
+    max-width: 220px;
+    max-height: 250px;
+    object-fit: cover;
+    border-radius: 10px;
+}
     </style>
 </head>
 
@@ -109,18 +166,35 @@
         </div>
 
         <div class="chat-area">
-            <div class="message">
-                👋 ¡Hola! Soy el asistente virtual del Ayuntamiento Municipal de Laguna Salada.
-                <br><br>
-                ¿En qué puedo ayudarte hoy?
-            </div>
-        </div>
+
+    <div class="message">
+        👋 ¡Hola! Soy el asistente virtual del Ayuntamiento Municipal de Laguna Salada.
+        <br><br>
+        Puedo ayudarte con información municipal, servicios y atención ciudadana.
+        <br><br>
+        ¿En qué puedo ayudarte hoy?
+    </div>
+
+    <div class="quick-actions">
+        <button onclick="preguntaRapida('Información del Ayuntamiento')">🏛️ Ayuntamiento</button>
+        <button onclick="preguntaRapida('¿Dónde está ubicado el Ayuntamiento?')">📍 Ubicación</button>
+        <button onclick="preguntaRapida('¿Cómo solicito la recogida de basura?')">🗑️ Basura</button>
+        <button onclick="preguntaRapida('¿Cómo puedo contactar con el Ayuntamiento?')">📞 Contacto</button>
+        <button onclick="preguntaRapida('Quiero reportar un problema')">🚨 Reportar problema</button>
+    </div>
+
+</div>
 
         <div class="input-area">
             <input type="text" placeholder="Escribe tu pregunta...">
             <button>Enviar</button>
         </div>
-
+<input
+    type="file"
+    id="fotoReporte"
+    accept="image/*"
+    style="display: none;"
+>
     </div>
 <script>
     const input = document.querySelector('.input-area input');
@@ -128,70 +202,284 @@
     const chatArea = document.querySelector('.chat-area');
 
     let esperandoSector = false;
+    
+    let estadoReporte = null;
+let fotoSeleccionada = null;
 
-    function enviarMensaje() {
-        const texto = input.value.trim();
+let datosReporte = {
+    categoria: '',
+    ubicacion: '',
+    descripcion: '',
+    foto: false
+};
 
-        if (texto === '') return;
+    function agregarMensaje(texto, tipo) {
+        const mensaje = document.createElement('div');
 
-        const mensajeUsuario = document.createElement('div');
-        mensajeUsuario.classList.add('user-message');
-        mensajeUsuario.textContent = texto;
+        if (tipo === 'usuario') {
+            mensaje.classList.add('user-message');
+        } else {
+            mensaje.classList.add('message');
+        }
 
-        chatArea.appendChild(mensajeUsuario);
+        mensaje.textContent = texto;
+        chatArea.appendChild(mensaje);
+        chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    function preguntaRapida(pregunta) {
+        input.value = pregunta;
+        enviarMensaje();
+    }
+    function mostrarOpcionesFoto() {
+    const opciones = document.createElement('div');
+    opciones.classList.add('photo-options');
+
+    const botonFoto = document.createElement('button');
+    botonFoto.textContent = '📸 Adjuntar foto';
+
+    const botonSinFoto = document.createElement('button');
+    botonSinFoto.textContent = '⏭️ Continuar sin foto';
+
+    botonFoto.addEventListener('click', function() {
+        document.getElementById('fotoReporte').click();
+    });
+
+    botonSinFoto.addEventListener('click', function() {
+        datosReporte.foto = false;
+        generarTicket();
+        opciones.remove();
+    });
+
+    opciones.appendChild(botonFoto);
+    opciones.appendChild(botonSinFoto);
+
+    chatArea.appendChild(opciones);
+    chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function mostrarImagenEnChat(archivo) {
+    const lector = new FileReader();
+
+    lector.onload = function(evento) {
+        const contenedor = document.createElement('div');
+        contenedor.classList.add('user-message', 'image-message');
+
+        const imagen = document.createElement('img');
+        imagen.src = evento.target.result;
+        imagen.alt = 'Evidencia fotográfica del reporte';
+
+        contenedor.appendChild(imagen);
+        chatArea.appendChild(contenedor);
+
         chatArea.scrollTop = chatArea.scrollHeight;
 
-        input.value = '';
-            setTimeout(function() {
-    const respuesta = document.createElement('div');
-    respuesta.classList.add('message');
+        datosReporte.foto = true;
+        fotoSeleccionada = archivo;
 
-    const pregunta = texto.toLowerCase();
+        generarTicket();
+    };
 
-    if (esperandoSector) {
-    respuesta.textContent =
-        '📍 Gracias, he registrado tu sector o comunidad como: ' + texto + '. Próximamente podré consultar la ruta y el horario correspondiente.';
-    esperandoSector = false;
+    lector.readAsDataURL(archivo);
+}
 
-} else if (
-    pregunta.includes('basura') ||
-    pregunta.includes('recogida') ||
-    pregunta.includes('camion')
-) {
-    respuesta.textContent =
-        '🗑️ Para consultar el día de recogida de basura, indícame tu sector o comunidad.';
-    esperandoSector = true;
+function generarTicket() {
+    const numeroTicket =
+        'LS-2026-' + Math.floor(1000 + Math.random() * 9000);
+
+    const evidencia = datosReporte.foto
+        ? '📸 Evidencia fotográfica: Adjunta'
+        : '📸 Evidencia fotográfica: No adjunta';
+
+    const respuesta =
+        '🎫 REPORTE CREADO EXITOSAMENTE\n\n' +
+        'Ticket: ' + numeroTicket + '\n' +
+        'Categoría: ' + datosReporte.categoria + '\n' +
+        'Ubicación: ' + datosReporte.ubicacion + '\n' +
+        'Descripción: ' + datosReporte.descripcion + '\n' +
+        evidencia + '\n' +
+        'Estado: Recibido\n\n' +
+        'Guarda tu número de ticket para consultar el estado de tu reporte.';
+
+    agregarMensaje(respuesta, 'asistente');
+
+    estadoReporte = null;
+    fotoSeleccionada = null;
+
+    datosReporte = {
+        categoria: '',
+        ubicacion: '',
+        descripcion: '',
+        foto: false
+    };
+}
+
+    function enviarMensaje() {
+    const texto = input.value.trim();
+
+    if (texto === '') return;
+
+    agregarMensaje(texto, 'usuario');
+    input.value = '';
+
+    setTimeout(function() {
+
+        const pregunta = texto.toLowerCase();
+        let respuesta = '';
+
+        // PASO 1: Esperando categoría del reporte
+        if (estadoReporte === 'esperandoCategoria') {
+
+            datosReporte.categoria = texto;
+            estadoReporte = 'esperandoUbicacion';
+
+            respuesta =
+                '📍 Gracias. Ahora indícame dónde está ocurriendo el problema. Puedes escribir el sector, calle o un punto de referencia.';
+
+        // PASO 2: Esperando ubicación
+        } else if (estadoReporte === 'esperandoUbicacion') {
+
+            datosReporte.ubicacion = texto;
+            estadoReporte = 'esperandoDescripcion';
+
+            respuesta =
+                '📝 Perfecto. Describe brevemente qué está ocurriendo y cualquier detalle que pueda ayudar al Ayuntamiento a atender el caso.';
+
+        // PASO 3: Esperando descripción
+} else if (estadoReporte === 'esperandoDescripcion') {
+
+    datosReporte.descripcion = texto;
+    estadoReporte = 'esperandoFoto';
+
+    respuesta =
+        '📸 ¿Deseas adjuntar una foto como evidencia del problema?';
+
+    setTimeout(function() {
+        mostrarOpcionesFoto();
+    }, 300);
     
-        respuesta.textContent =
-            '🗑️ Para consultar el día de recogida de basura, indícame tu sector o comunidad.';
+        } else if (esperandoSector) {
+
+            respuesta =
+                '📍 Gracias. He registrado tu sector o comunidad como: ' +
+                texto +
+                '. Próximamente podré consultar la ruta y el horario correspondiente.';
+
+            esperandoSector = false;
+
+        // INFORMACIÓN DEL AYUNTAMIENTO
+        } else if (
+            pregunta.includes('información del ayuntamiento') ||
+            pregunta.includes('informacion del ayuntamiento') ||
+            pregunta.includes('qué es el ayuntamiento') ||
+            pregunta.includes('que es el ayuntamiento')
+        ) {
+
+            respuesta =
+                '🏛️ El Ayuntamiento Municipal de Laguna Salada es el gobierno local del municipio de Laguna Salada, provincia Valverde, República Dominicana. Puedo ayudarte con información sobre servicios municipales, ubicación, contacto y atención ciudadana.';
+
+        // UBICACIÓN
+        } else if (
+            pregunta.includes('ubicación') ||
+            pregunta.includes('ubicacion') ||
+            pregunta.includes('dirección') ||
+            pregunta.includes('direccion') ||
+            pregunta.includes('dónde está') ||
+            pregunta.includes('donde esta')
+        ) {
+
+            respuesta =
+                '📍 El Ayuntamiento Municipal de Laguna Salada está ubicado en la C/ 30 de Mayo No. 123, Centro del Pueblo, Laguna Salada, provincia Valverde, República Dominicana.';
+
+        // CONTACTO
+        } else if (
+            pregunta.includes('teléfono') ||
+            pregunta.includes('telefono') ||
+            pregunta.includes('contacto') ||
+            pregunta.includes('contactar') ||
+            pregunta.includes('llamar') ||
+            pregunta.includes('correo')
+        ) {
+
+            respuesta =
+                '📞 Puedes comunicarte con el Ayuntamiento al (809) 585-7721 o escribir al correo info@ayuntamientolagunasalada.gob.do.';
+
+        // DISTRITOS MUNICIPALES
+        } else if (
+            pregunta.includes('distrito') ||
+            pregunta.includes('jaibón') ||
+            pregunta.includes('jaibon') ||
+            pregunta.includes('la caya') ||
+            pregunta.includes('guayacanes')
+        ) {
+
+            respuesta =
+                '📍 El municipio de Laguna Salada comprende la cabecera municipal y los distritos municipales de Jaibón, La Caya y Cruce de Guayacanes.';
+
+        // RECOGIDA DE BASURA
+        } else if (
+            pregunta.includes('basura') ||
+            pregunta.includes('recogida') ||
+            pregunta.includes('camión') ||
+            pregunta.includes('camion') ||
+            pregunta.includes('residuos')
+        ) {
+
+            respuesta =
+                '🗑️ El servicio de recogida de residuos sólidos está dirigido a la ciudadanía de Laguna Salada. Si deseas consultar información relacionada con tu zona, indícame tu sector o comunidad.';
+
             esperandoSector = true;
 
-    } else if (
-        pregunta.includes('horario') ||
-        pregunta.includes('hora') ||
-        pregunta.includes('abren')
-    ) {
-        respuesta.textContent =
-            '🕒 El Ayuntamiento Municipal de Laguna Salada ofrece atención al ciudadano en horario laboral. ¿Deseas consultar el horario de una oficina o departamento específico?';
+        // HORARIOS
+        } else if (
+            pregunta.includes('horario') ||
+            pregunta.includes('hora') ||
+            pregunta.includes('abren') ||
+            pregunta.includes('cierran')
+        ) {
 
-    } else if (
-        pregunta.includes('contacto') ||
-        pregunta.includes('telefono') ||
-        pregunta.includes('llamar')
-    ) {
-        respuesta.textContent =
-            '📞 Puedo ayudarte a encontrar la información de contacto del Ayuntamiento o del departamento que necesites. ¿Con cuál deseas comunicarte?';
+            respuesta =
+                '🕒 Puedo ayudarte con los horarios de atención del Ayuntamiento. Antes de la presentación final, incorporaremos los horarios oficiales verificados de cada oficina o departamento.';
 
-    } else {
-        respuesta.textContent =
-            '🤖 Puedo ayudarte con información sobre recogida de basura, horarios y contacto con el Ayuntamiento. ¿Sobre cuál de estos temas deseas consultar?';
-    }
+        // INICIAR REPORTE
+        } else if (
+            pregunta.includes('reportar') ||
+            pregunta.includes('reporte') ||
+            pregunta.includes('problema') ||
+            pregunta.includes('incidencia')
+        ) {
 
-    chatArea.appendChild(respuesta);
-    chatArea.scrollTop = chatArea.scrollHeight;
+            estadoReporte = 'esperandoCategoria';
 
-}, 800);
-    }
+            respuesta =
+                '🚨 Claro. Vamos a crear un reporte ciudadano.\n\n' +
+                '¿Qué tipo de problema deseas reportar?\n\n' +
+                'Por ejemplo: basura acumulada, luminaria dañada, calle deteriorada, árbol caído u otro problema municipal.';
+
+        // SALUDO
+        } else if (
+            pregunta.includes('hola') ||
+            pregunta.includes('buenos días') ||
+            pregunta.includes('buenos dias') ||
+            pregunta.includes('buenas tardes') ||
+            pregunta.includes('buenas noches')
+        ) {
+
+            respuesta =
+                '👋 ¡Hola! Bienvenido al Asistente Virtual del Ayuntamiento Municipal de Laguna Salada. ¿En qué puedo ayudarte hoy?';
+
+        // RESPUESTA GENERAL
+        } else {
+
+            respuesta =
+                '🤖 Puedo ayudarte con información sobre el Ayuntamiento, ubicación, contacto, distritos municipales, recogida de basura y atención ciudadana. También puedes pedirme que te ayude a reportar un problema.';
+
+        }
+
+        agregarMensaje(respuesta, 'asistente');
+
+    }, 600);
+}
 
     button.addEventListener('click', enviarMensaje);
 
@@ -200,6 +488,16 @@
             enviarMensaje();
         }
     });
+
+    document.getElementById('fotoReporte').addEventListener('change', function(event) {
+    const archivo = event.target.files[0];
+
+    if (!archivo) return;
+
+    mostrarImagenEnChat(archivo);
+
+    event.target.value = '';
+});
 </script>
 </body>
 </html>
