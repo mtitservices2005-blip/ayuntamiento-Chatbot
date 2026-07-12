@@ -175,6 +175,29 @@
     background: #075e54;
     color: white;
 }
+
+.navigation-bar {
+    padding: 6px 12px;
+    background: #f5f5f5;
+    border-top: 1px solid #ddd;
+    text-align: center;
+}
+
+.navigation-bar button {
+    background: transparent;
+    border: 1px solid #075e54;
+    color: #075e54;
+    border-radius: 18px;
+    padding: 7px 16px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.navigation-bar button:hover {
+    background: #075e54;
+    color: white;
+}
     </style>
 </head>
 
@@ -198,13 +221,23 @@
     </div>
 
     <div class="quick-actions">
-        <button onclick="preguntaRapida('Información del Ayuntamiento')">🏛️ Ayuntamiento</button>
-        <button onclick="preguntaRapida('¿Dónde está ubicado el Ayuntamiento?')">📍 Ubicación</button>
-        <button onclick="preguntaRapida('¿Cómo solicito la recogida de basura?')">🗑️ Basura</button>
-        <button onclick="preguntaRapida('¿Cómo puedo contactar con el Ayuntamiento?')">📞 Contacto</button>
-        <button onclick="preguntaRapida('Quiero reportar un problema')">🚨 Reportar problema</button>
-    </div>
+    <button onclick="preguntaRapida('Quiero conocer Laguna Salada')">🏛️ Conoce Laguna Salada</button>
 
+    <button onclick="preguntaRapida('Quiero consultar los servicios municipales')">🏢 Servicios municipales</button>
+
+    <button onclick="preguntaRapida('Quiero reportar un problema')">🚨 Reportar un problema</button>
+
+    <button onclick="preguntaRapida('Quiero consultar mi ticket')">🎫 Consultar mi ticket</button>
+
+    <button onclick="preguntaRapida('Quiero ver noticias y eventos')">📰 Noticias y eventos</button>
+
+    <button onclick="preguntaRapida('¿Cómo puedo contactar con el Ayuntamiento?')">📞 Contacto</button>
+</div>
+
+</div>
+
+<div class="navigation-bar">
+    <button onclick="volverMenuPrincipal()">🏠 Menú principal</button>
 </div>
 
         <div class="input-area">
@@ -436,6 +469,83 @@ function mostrarSectoresReporte() {
     chatArea.appendChild(contenedor);
     chatArea.scrollTop = chatArea.scrollHeight;
 }
+function mostrarMenuLagunaSalada() {
+    const contenedor = document.createElement('div');
+    contenedor.classList.add('selection-options');
+
+    const opciones = [
+        {
+            texto: '📜 Historia',
+            pregunta: 'Historia de Laguna Salada'
+        },
+        {
+            texto: '📸 Lugares emblemáticos',
+            pregunta: 'Lugares emblemáticos de Laguna Salada'
+        },
+        {
+            texto: '👥 Población',
+            pregunta: 'Población de Laguna Salada'
+        },
+        {
+            texto: '💼 Economía',
+            pregunta: 'Economía de Laguna Salada'
+        },
+        {
+            texto: '🗺️ Sectores y barrios',
+            pregunta: 'Sectores y barrios de Laguna Salada'
+        },
+        {
+            texto: '🏛️ Instituciones municipales',
+            pregunta: 'Instituciones municipales de Laguna Salada'
+        }
+    ];
+
+    opciones.forEach(function(opcion) {
+        const boton = document.createElement('button');
+        boton.textContent = opcion.texto;
+
+        boton.addEventListener('click', function() {
+            contenedor.remove();
+            preguntaRapida(opcion.pregunta);
+        });
+
+        contenedor.appendChild(boton);
+    });
+
+    chatArea.appendChild(contenedor);
+    chatArea.scrollTop = chatArea.scrollHeight;
+}
+function volverMenuPrincipal() {
+
+    estadoReporte = null;
+    esperandoSector = false;
+
+    const mensaje = document.createElement('div');
+    mensaje.classList.add('message');
+
+    mensaje.innerHTML =
+        '🏠 <strong>MENÚ PRINCIPAL</strong><br><br>' +
+        '¿En qué puedo ayudarte hoy?';
+
+    chatArea.appendChild(mensaje);
+
+    const contenedor = document.createElement('div');
+    contenedor.classList.add('quick-actions');
+
+    contenedor.innerHTML = `
+        <button onclick="preguntaRapida('Quiero conocer Laguna Salada')">🏛️ Conoce Laguna Salada</button>
+        <button onclick="preguntaRapida('Quiero consultar los servicios municipales')">🏢 Servicios municipales</button>
+        <button onclick="preguntaRapida('Quiero reportar un problema')">🚨 Reportar un problema</button>
+        <button onclick="preguntaRapida('Quiero consultar mi ticket')">🎫 Consultar mi ticket</button>
+        <button onclick="preguntaRapida('Quiero ver noticias y eventos')">📰 Noticias y eventos</button>
+        <button onclick="preguntaRapida('¿Cómo puedo contactar con el Ayuntamiento?')">📞 Contacto</button>
+    `;
+
+    chatArea.appendChild(contenedor);
+
+    chatArea.scrollTop = chatArea.scrollHeight;
+}
+
     function enviarMensaje() {
     const texto = input.value.trim();
 
@@ -519,6 +629,111 @@ function mostrarSectoresReporte() {
                 '. Próximamente podré consultar la ruta y el horario correspondiente.';
 
             esperandoSector = false;
+
+        } else if (
+    pregunta.includes('conocer laguna salada') ||
+    pregunta.includes('conoce laguna salada')
+) {
+
+    respuesta =
+        '🏛️ CONOCE LAGUNA SALADA\n\n' +
+        'Descubre la historia, los lugares emblemáticos, la población, la economía y los sectores de nuestro municipio.\n\n' +
+        '¿Qué deseas conocer?';
+
+    setTimeout(function() {
+        mostrarMenuLagunaSalada();
+    }, 300);
+
+    // HISTORIA DE LAGUNA SALADA
+} else if (
+    pregunta.includes('historia de laguna salada')
+) {
+
+    respuesta =
+        '📜 HISTORIA DE LAGUNA SALADA\n\n' +
+        'Laguna Salada es un municipio de la provincia Valverde, en la región noroeste de la República Dominicana.\n\n' +
+        'Su desarrollo histórico ha estado estrechamente vinculado a la agricultura, el comercio y el crecimiento de sus comunidades.\n\n' +
+        '🏛️ Esta sección podrá ampliarse con acontecimientos históricos, fechas importantes, personalidades destacadas y material del archivo municipal.';
+
+// LUGARES EMBLEMÁTICOS
+} else if (
+    pregunta.includes('lugares emblemáticos de laguna salada') ||
+    pregunta.includes('lugares emblematicos de laguna salada')
+) {
+
+    respuesta =
+        '📸 LUGARES EMBLEMÁTICOS DE LAGUNA SALADA\n\n' +
+        'Estamos preparando una experiencia visual para conocer espacios representativos del municipio, entre ellos:\n\n' +
+        '🌳 Parque Central\n' +
+        '🏛️ Ayuntamiento Municipal\n' +
+        '⛪ Templos y espacios religiosos\n' +
+        '🪦 Cementerio Municipal\n' +
+        '📍 Otros lugares de interés comunitario\n\n' +
+        'Próximamente cada lugar podrá incluir fotografías, descripción, historia y ubicación.';
+
+// POBLACIÓN
+} else if (
+    pregunta.includes('población de laguna salada') ||
+    pregunta.includes('poblacion de laguna salada')
+) {
+
+    respuesta =
+        '👥 POBLACIÓN DE LAGUNA SALADA\n\n' +
+        'Laguna Salada forma parte de la provincia Valverde, en la región noroeste de la República Dominicana.\n\n' +
+        '📊 Estamos validando la cifra oficial de población correspondiente específicamente a la demarcación que atiende esta instancia, para evitar mezclar los datos de Laguna Salada con los de distritos municipales que cuentan con gobiernos locales propios.\n\n' +
+        'La cifra oficial se incorporará utilizando datos territoriales y censales verificados.';
+
+// ECONOMÍA
+} else if (
+    pregunta.includes('economía de laguna salada') ||
+    pregunta.includes('economia de laguna salada')
+) {
+
+    respuesta =
+        '💼 ECONOMÍA DE LAGUNA SALADA\n\n' +
+        'La actividad económica de Laguna Salada está vinculada principalmente a la agricultura, el comercio y los servicios locales.\n\n' +
+        '🌱 Agricultura\n' +
+        '🏪 Comercio local\n' +
+        '🚚 Transporte y distribución\n' +
+        '🛠️ Pequeños negocios y servicios\n\n' +
+        'Esta sección podrá ampliarse con información oficial sobre producción, empleo, emprendimiento y principales actividades económicas del municipio.';
+
+// SECTORES Y BARRIOS
+} else if (
+    pregunta.includes('sectores y barrios de laguna salada')
+) {
+
+    respuesta =
+        '🗺️ SECTORES Y BARRIOS DE LAGUNA SALADA\n\n' +
+        'Entre los sectores identificados para esta instancia se encuentran:\n\n' +
+        '📍 San Antonio\n' +
+        '📍 Puerto Rico\n' +
+        '📍 La Curva\n' +
+        '📍 Pueblo Nuevo\n' +
+        '📍 Las Flores\n' +
+        '📍 Alto de La Hicotea\n\n' +
+        '🏛️ Este asistente atiende exclusivamente información y reportes correspondientes a la jurisdicción directa del Ayuntamiento Municipal de Laguna Salada.';
+
+// INSTITUCIONES MUNICIPALES
+} else if (
+    pregunta.includes('instituciones municipales de laguna salada')
+) {
+
+    respuesta =
+        '🏛️ INSTITUCIONES Y SERVICIOS MUNICIPALES\n\n' +
+        'El Ayuntamiento Municipal de Laguna Salada es responsable de distintos servicios y áreas de gestión local.\n\n' +
+        'Esta sección se ampliará progresivamente con información verificada sobre departamentos, oficinas, servicios, contactos y horarios de atención.\n\n' +
+        '📞 También puedes utilizar la opción Contacto del menú principal para consultar los medios disponibles de comunicación con el Ayuntamiento.';
+
+
+    respuesta =
+        '🏛️ CONOCE LAGUNA SALADA\n\n' +
+        'Descubre la historia, los lugares emblemáticos, la población, la economía y los sectores de nuestro municipio.\n\n' +
+        '¿Qué deseas conocer?';
+
+    setTimeout(function() {
+        mostrarMenuLagunaSalada();
+    }, 300);
 
         // INFORMACIÓN DEL AYUNTAMIENTO
         } else if (
