@@ -22,7 +22,7 @@
             background: white;
             border-radius: 20px;
             box-shadow: 0 10px 35px rgba(0,0,0,0.15);
-            overflow: au;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
         }
@@ -664,10 +664,7 @@ const evidencia = datosReporte.foto
         'Categoría: ' + datosReporte.categoria + '\n' +
         'Sector: ' + datosReporte.sector + '\n' +
         'Ubicación: ' + datosReporte.ubicacion + '\n' +
-        'Categoría: ' + datosReporte.categoria + '\n' +
-'Sector: ' + datosReporte.sector + '\n' +
-'Ubicación: ' + datosReporte.ubicacion + '\n' +
-'Ubicación GPS: ' +
+        'Ubicación GPS: ' +
 (
     datosReporte.latitud !== null &&
     datosReporte.longitud !== null
@@ -689,12 +686,15 @@ const evidencia = datosReporte.foto
     fotoSeleccionada = null;
 
     datosReporte = {
-        categoria: '',
-        sector: '',
-        ubicacion: '',
-        descripcion: '',
-        foto: false
-    };
+    categoria: '',
+    sector: '',
+    ubicacion: '',
+    latitud: null,
+    longitud: null,
+    descripcion: '',
+    foto: false
+};
+
 }
 
 
@@ -1215,6 +1215,8 @@ function obtenerUbicacionGPS() {
             categoria: '',
             sector: '',
             ubicacion: '',
+            latitud: null,
+            longitud: null,
             descripcion: '',
             foto: false
         };
@@ -1360,7 +1362,6 @@ setTimeout(function() {
 ) {
 
     respuesta =
-        respuesta =
     '🗺️ SECTORES Y BARRIOS DE LAGUNA SALADA\n\n' +
     'Entre los sectores identificados para esta instancia se encuentran:\n\n' +
     sectoresLagunaSalada

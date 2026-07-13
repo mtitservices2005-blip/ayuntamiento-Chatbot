@@ -87,6 +87,21 @@
             font-size: 14px;
         }
 
+        .motivo-devolucion {
+    background: #ffebee;
+    color: #b71c1c;
+    border-left: 5px solid #c62828;
+    padding: 14px;
+    border-radius: 9px;
+    margin-top: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.motivo-devolucion span {
+    color: #7f1d1d;
+    font-weight: 600;
+}
 
         /* =====================================================
            🎫 TARJETAS DE TRABAJO
@@ -205,6 +220,22 @@
 
 .finalizacion-box textarea {
     resize: vertical;
+}
+
+.motivo-devolucion {
+    background: #ffebee;
+    color: #b71c1c;
+    border-left: 5px solid #c62828;
+    padding: 14px;
+    border-radius: 9px;
+    margin-top: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.motivo-devolucion span {
+    color: #7f1d1d;
+    font-weight: 600;
 }
 
         /* =====================================================
@@ -355,10 +386,11 @@
         async function cargarBrigada() {
 
             const { data, error } = await supabaseClient
-                .from('brigadas')
-                .select('*')
-                .eq('id', BRIGADA_ID_PRUEBA)
-                .single();
+    .from('brigadas')
+    .select('*')
+    .eq('id', BRIGADA_ID_PRUEBA)
+    .eq('municipio_id', 1)
+    .single();
 
 
             if (error) {
@@ -398,18 +430,19 @@
         async function cargarTrabajos() {
 
             const { data, error } = await supabaseClient
-                .from('tickets')
-                .select('*')
-                .eq(
-                    'brigada_id',
-                    BRIGADA_ID_PRUEBA
-                )
-                .order(
-                    'creado_en',
-                    {
-                        ascending: false
-                    }
-                );
+    .from('tickets')
+    .select('*')
+    .eq('municipio_id', 1)
+    .eq(
+        'brigada_id',
+        BRIGADA_ID_PRUEBA
+    )
+    .order(
+        'creado_en',
+        {
+            ascending: false
+        }
+    );
 
 
             if (error) {
@@ -501,15 +534,46 @@
 
                     <div class="descripcion">
 
-                        <strong>📝 Descripción:</strong>
-                        <br>
+    <strong>📝 Descripción:</strong>
+    <br>
 
-                        ${ticket.descripcion}
+    ${ticket.descripcion}
 
-                    </div>
+</div>
 
 
-                    <div class="acciones">
+${
+    ticket.motivo_devolucion
+    ?
+    `
+        <div class="motivo-devolucion">
+
+            <strong>
+                ↩️ Trabajo devuelto para corrección
+            </strong>
+
+            <br><br>
+
+            <strong>Motivo del administrador:</strong>
+            <br>
+
+            ${ticket.motivo_devolucion}
+
+            <br><br>
+
+            <span>
+                Corrige el trabajo indicado y envía una nueva
+                evidencia para verificación.
+            </span>
+
+        </div>
+    `
+    :
+    ''
+}
+
+
+<div class="acciones">
 
                         <button
                             class="btn mapa-btn"
@@ -720,6 +784,7 @@ async function iniciarTrabajo(ticketId, numeroTicket) {
                 estado: 'en-proceso'
             })
             .eq('id', ticketId)
+            .eq('municipio_id', 1)
             .eq('brigada_id', BRIGADA_ID_PRUEBA)
             .eq('estado', 'asignado');
 
@@ -858,12 +923,14 @@ async function completarTrabajo(ticketId, numeroTicket) {
         const { error: errorActualizacion } = await supabaseClient
             .from('tickets')
             .update({
-                foto_resolucion_url: rutaArchivo,
-                comentario_resolucion: comentario,
-                completado_en: new Date().toISOString(),
+            foto_resolucion_url: rutaArchivo,
+            comentario_resolucion: comentario,
+            completado_en: new Date().toISOString(),
+            motivo_devolucion: null,
                 estado: 'pendiente-verificacion'
-            })
+})
             .eq('id', ticketId)
+            .eq('municipio_id', 1)
             .eq('brigada_id', BRIGADA_ID_PRUEBA)
             .eq('estado', 'en-proceso');
 

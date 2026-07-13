@@ -26,7 +26,7 @@
             background: #f4f7f6;
             color: #263238;
         }
-
+ 
 
         /* =====================================================
            🏛️ ENCABEZADO
@@ -511,12 +511,13 @@ async function cargarBrigadasDesdeSupabase() {
     try {
 
         const { data, error } = await supabaseClient
-            .from('brigadas')
-            .select('*')
-            .eq('activa', true)
-            .order('nombre', {
-                ascending: true
-            });
+    .from('brigadas')
+    .select('*')
+    .eq('municipio_id', 1)
+    .eq('activa', true)
+    .order('nombre', {
+        ascending: true
+    });
 
 
         // -------------------------------------------------
@@ -561,11 +562,12 @@ async function cargarTicketsDesdeSupabase() {
     try {
 
         const { data, error } = await supabaseClient
-            .from('tickets')
-            .select('*')
-            .order('creado_en', {
-                ascending: false
-            });
+    .from('tickets')
+    .select('*')
+    .eq('municipio_id', 1)
+    .order('creado_en', {
+        ascending: false
+    });
 
 
         // -------------------------------------------------
@@ -621,14 +623,16 @@ async function cargarTicketsDesdeSupabase() {
 
         function obtenerNombreEstado(estado) {
 
-            const nombres = {
-    'recibido': '🟡 Recibido',
-    'asignado': '🔵 Asignado',
-    'en-proceso': '🟠 En proceso',
-    'pendiente-verificacion': '🟣 Pendiente de verificación',
-    'resuelto': '🟢 Resuelto'
-};
-        }
+    const nombres = {
+        'recibido': '🟡 Recibido',
+        'asignado': '🔵 Asignado',
+        'en-proceso': '🟠 En proceso',
+        'pendiente-verificacion': '🟣 Pendiente de verificación',
+        'resuelto': '🟢 Resuelto'
+    };
+
+    return nombres[estado] || estado;
+}
 
 // =====================================================
 // 🗓️ FORMATEAR FECHA
@@ -968,12 +972,14 @@ async function asignarBrigada(ticketId, numeroTicket) {
         // -------------------------------------------------
 
         const { error } = await supabaseClient
-            .from('tickets')
-            .update({
-                brigada_id: brigadaId,
-                estado: 'asignado'
-            })
-            .eq('id', ticketId);
+    .from('tickets')
+    .update({
+        brigada_id: brigadaId,
+        estado: 'asignado'
+    })
+    .eq('id', ticketId)
+    .eq('municipio_id', 1)
+    .eq('estado', 'recibido');
 
 
         // -------------------------------------------------
@@ -1323,12 +1329,13 @@ async function aprobarResolucion(ticketId, numeroTicket) {
     try {
 
         const { error } = await supabaseClient
-            .from('tickets')
-            .update({
-                estado: 'resuelto'
-            })
-            .eq('id', ticketId)
-            .eq('estado', 'pendiente-verificacion');
+    .from('tickets')
+    .update({
+        estado: 'resuelto'
+    })
+    .eq('id', ticketId)
+    .eq('municipio_id', 1)
+    .eq('estado', 'pendiente-verificacion');
 
 
         if (error) {
@@ -1402,14 +1409,19 @@ async function devolverABrigada(ticketId, numeroTicket) {
 
     try {
 
-        const { error } = await supabaseClient
-            .from('tickets')
-            .update({
-                estado: 'en-proceso'
-            })
-            .eq('id', ticketId)
-            .eq('estado', 'pendiente-verificacion');
+        const { data, error } = await supabaseClient
+    .from('tickets')
+    .update({
+        estado: 'en-proceso',
+        motivo_devolucion: motivo.trim()
+    })
+    .eq('id', ticketId)
+    .eq('municipio_id', 1)
+    .eq('estado', 'pendiente-verificacion')
+    .select();
 
+    console.log('Resultado devolución:', data);
+    console.log('Error devolución:', error);
 
         if (error) {
 
