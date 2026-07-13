@@ -630,6 +630,103 @@ const rutaFoto =
     }
 }
 
+// =====================================================
+// 🎫 CONSULTAR TICKET EN SUPABASE
+// Busca un ticket por su número dentro del municipio
+// de Laguna Salada y devuelve su estado al ciudadano.
+// =====================================================
+
+async function consultarTicketEnSupabase(numeroTicket) {
+
+    try {
+
+        const numeroLimpio = numeroTicket
+            .trim()
+            .toUpperCase();
+
+        const { data, error } = await supabaseClient
+            .from('tickets')
+            .select(
+                'numero, categoria, sector, estado, creado_en'
+            )
+            .eq('numero', numeroLimpio)
+            .eq('municipio_id', 1)
+            .maybeSingle();
+
+        if (error) {
+
+            console.error(
+                '❌ Error al consultar ticket:',
+                error
+            );
+
+            return {
+                exito: false,
+                mensaje:
+                    '⚠️ No fue posible consultar el ticket en este momento. Inténtalo nuevamente.'
+            };
+        }
+
+        if (!data) {
+
+            return {
+                exito: false,
+                mensaje:
+                    '🔎 No encontramos ningún reporte con el número ' +
+                    numeroLimpio +
+                    '.\n\nVerifica que esté escrito correctamente e inténtalo de nuevo.'
+            };
+        }
+
+        const nombresEstados = {
+            'recibido': '🟡 Reporte recibido',
+            'asignado': '🔵 Asignado para atención',
+            'en-proceso': '🟠 Trabajo en proceso',
+            'pendiente-verificacion':
+                '🟣 Trabajo realizado, pendiente de verificación',
+            'resuelto': '🟢 Reporte resuelto'
+        };
+
+        const estadoVisible =
+            nombresEstados[data.estado] || data.estado;
+
+        const fechaCreacion = data.creado_en
+            ? new Date(data.creado_en).toLocaleDateString(
+                'es-DO',
+                {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                }
+            )
+            : 'No disponible';
+
+        return {
+            exito: true,
+            mensaje:
+                '🎫 ESTADO DE TU REPORTE\n\n' +
+                'Ticket: ' + data.numero + '\n' +
+                'Categoría: ' + data.categoria + '\n' +
+                'Sector: ' + data.sector + '\n' +
+                'Estado: ' + estadoVisible + '\n' +
+                'Fecha del reporte: ' + fechaCreacion
+        };
+
+    } catch (error) {
+
+        console.error(
+            '❌ Error inesperado al consultar ticket:',
+            error
+        );
+
+        return {
+            exito: false,
+            mensaje:
+                '⚠️ Ocurrió un problema inesperado al consultar el ticket.'
+        };
+    }
+}
+
 async function generarTicket() {
 const numeroTicket =
     'LS-2026-' + Math.floor(1000 + Math.random() * 9000);
@@ -1173,7 +1270,7 @@ function obtenerUbicacionGPS() {
 }
 
 
-    function enviarMensaje() {
+    async function enviarMensaje() {
     const texto = input.value.trim();
 
     if (texto === '') return;
@@ -1181,13 +1278,28 @@ function obtenerUbicacionGPS() {
     agregarMensaje(texto, 'usuario');
     input.value = '';
 
-    setTimeout(function() {
+    setTimeout(async function() {
 
         const pregunta = texto.toLowerCase();
         let respuesta = '';
 
-        // PASO 1: Esperando categoría del reporte
-        if (estadoReporte === 'esperandoOtroSector') {
+        // =====================================================
+// 🎫 ESPERANDO NÚMERO DE TICKET
+// Consulta el ticket real en Supabase y muestra
+// su estado actual al ciudadano.
+// =====================================================
+
+if (estadoReporte === 'esperandoNumeroTicket') {
+
+    estadoReporte = null;
+
+    const resultado =
+        await consultarTicketEnSupabase(texto);
+
+    respuesta = resultado.mensaje;
+
+} else if (estadoReporte === 'esperandoOtroSector') {
+
 
     const sectorIngresado = texto.toLowerCase();
 
@@ -1465,6 +1577,24 @@ setTimeout(function() {
 
             respuesta =
                 '🕒 Puedo ayudarte con los horarios de atención del Ayuntamiento. Antes de la presentación final, incorporaremos los horarios oficiales verificados de cada oficina o departamento.';
+
+                // =====================================================
+// 🎫 CONSULTAR ESTADO DE UN TICKET
+// Activa el modo de consulta y solicita al ciudadano
+// el número de su reporte.
+// =====================================================
+} else if (
+    pregunta.includes('consultar mi ticket') ||
+    pregunta.includes('consultar ticket') ||
+    pregunta.includes('estado de mi ticket')
+) {
+
+    estadoReporte = 'esperandoNumeroTicket';
+
+    respuesta =
+        '🎫 CONSULTAR MI TICKET\n\n' +
+        'Escribe el número de tu reporte para consultar su estado actual.\n\n' +
+        'Ejemplo: LS-2026-4827';
 
         // INICIAR REPORTE
         } else if (
