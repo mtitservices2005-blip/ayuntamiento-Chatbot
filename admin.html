@@ -209,6 +209,11 @@
             color: #e65100;
         }
 
+        .pendiente-verificacion {
+    background: #ede9fe;
+    color: #6d28d9;
+        }
+
         .resuelto {
             background: #d4edda;
             color: #155724;
@@ -315,6 +320,15 @@
                 font-size: 18px;
             }
         }
+        .aprobar-btn {
+    background: #d4edda;
+    color: #155724;
+}
+
+.devolver-btn {
+    background: #ffebee;
+    color: #b71c1c;
+}
 
     </style>
 </head>
@@ -608,13 +622,12 @@ async function cargarTicketsDesdeSupabase() {
         function obtenerNombreEstado(estado) {
 
             const nombres = {
-                'recibido': '🟡 Recibido',
-                'asignado': '🔵 Asignado',
-                'en-proceso': '🟠 En proceso',
-                'resuelto': '🟢 Resuelto'
-            };
-
-            return nombres[estado] || estado;
+    'recibido': '🟡 Recibido',
+    'asignado': '🔵 Asignado',
+    'en-proceso': '🟠 En proceso',
+    'pendiente-verificacion': '🟣 Pendiente de verificación',
+    'resuelto': '🟢 Resuelto'
+};
         }
 
 // =====================================================
@@ -734,7 +747,38 @@ function formatearFecha(fechaISO) {
                         <strong>📝 Descripción:</strong><br>
                         ${ticket.descripcion}
                     </div>
+                    ${
+    ticket.estado === 'pendiente-verificacion' &&
+    ticket.foto_resolucion_url
+    ?
+    `
+        <div class="ticket-description">
 
+            <strong>🔍 Trabajo enviado para verificación</strong>
+
+            <br><br>
+
+            <strong>📝 Comentario de la brigada:</strong>
+            <br>
+
+            ${
+                ticket.comentario_resolucion ||
+                'Sin comentario adicional.'
+            }
+
+            <br><br>
+
+            <strong>🕒 Completado:</strong>
+
+            ${
+                formatearFecha(ticket.completado_en)
+            }
+
+        </div>
+    `
+    :
+    ''
+}     
 
                     <div class="ticket-actions">
 
@@ -801,6 +845,48 @@ function formatearFecha(fechaISO) {
             )"
         >
             👷 Asignar ticket
+        </button>
+    `
+    :
+    ''
+}
+            ${
+    ticket.estado === 'pendiente-verificacion'
+    ?
+    `
+        <button
+            class="action-btn photo-btn"
+            onclick="
+                verFotoResolucion(
+                    '${ticket.foto_resolucion_url}'
+                )
+            "
+        >
+            📸 Ver trabajo terminado
+        </button>
+
+        <button
+            class="action-btn aprobar-btn"
+            onclick="
+                aprobarResolucion(
+                    ${ticket.id},
+                    '${ticket.numero}'
+                )
+            "
+        >
+            ✅ Aprobar y cerrar
+        </button>
+
+        <button
+            class="action-btn devolver-btn"
+            onclick="
+                devolverABrigada(
+                    ${ticket.id},
+                    '${ticket.numero}'
+                )
+            "
+        >
+            ↩️ Devolver a brigada
         </button>
     `
     :
@@ -1147,6 +1233,221 @@ async function verFoto(rutaFoto) {
     }
 }
 
+// =====================================================
+// 📸 VER EVIDENCIA DEL TRABAJO TERMINADO
+// Descarga la fotografía enviada por la brigada desde
+// el bucket privado de evidencias de resolución.
+// =====================================================
+
+async function verFotoResolucion(rutaFoto) {
+
+    try {
+
+        if (!rutaFoto) {
+
+            alert(
+                'Este ticket no tiene evidencia de resolución.'
+            );
+
+            return;
+        }
+
+
+        const rutaLimpia = rutaFoto.trim();
+
+
+        const { data, error } = await supabaseClient
+            .storage
+            .from('evidencias-resoluciones')
+            .download(rutaLimpia);
+
+
+        if (error) {
+
+            console.error(
+                '❌ Error al abrir evidencia de resolución:',
+                error
+            );
+
+            alert(
+                'No fue posible abrir la evidencia del trabajo terminado.'
+            );
+
+            return;
+        }
+
+
+        const urlTemporal = URL.createObjectURL(data);
+
+
+        window.open(
+            urlTemporal,
+            '_blank'
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            '❌ Error inesperado al abrir evidencia de resolución:',
+            error
+        );
+
+        alert(
+            'Ocurrió un error al abrir la evidencia del trabajo terminado.'
+        );
+    }
+}
+
+
+// =====================================================
+// ✅ APROBAR RESOLUCIÓN Y CERRAR TICKET
+// Permite al administrador confirmar que el trabajo fue
+// realizado correctamente y marcar el ticket como resuelto.
+// =====================================================
+
+async function aprobarResolucion(ticketId, numeroTicket) {
+
+    const confirmar = confirm(
+        '¿Confirmas que el trabajo del ticket ' +
+        numeroTicket +
+        ' fue realizado correctamente y deseas cerrarlo?'
+    );
+
+
+    if (!confirmar) {
+        return;
+    }
+
+
+    try {
+
+        const { error } = await supabaseClient
+            .from('tickets')
+            .update({
+                estado: 'resuelto'
+            })
+            .eq('id', ticketId)
+            .eq('estado', 'pendiente-verificacion');
+
+
+        if (error) {
+
+            console.error(
+                '❌ Error al aprobar resolución:',
+                error
+            );
+
+            alert(
+                'No fue posible aprobar y cerrar el ticket.'
+            );
+
+            return;
+        }
+
+
+        alert(
+            'Ticket ' +
+            numeroTicket +
+            ' aprobado y cerrado correctamente.'
+        );
+
+
+        await cargarTicketsDesdeSupabase();
+
+
+    } catch (error) {
+
+        console.error(
+            '❌ Error inesperado al aprobar resolución:',
+            error
+        );
+
+        alert(
+            'Ocurrió un error inesperado al cerrar el ticket.'
+        );
+    }
+}
+
+
+// =====================================================
+// ↩️ DEVOLVER TICKET A LA BRIGADA
+// Devuelve el ticket al estado "en-proceso" para que la
+// brigada corrija o complete nuevamente el trabajo.
+// =====================================================
+
+async function devolverABrigada(ticketId, numeroTicket) {
+
+    const motivo = prompt(
+        'Escribe el motivo por el que se devuelve el ticket ' +
+        numeroTicket +
+        ' a la brigada:'
+    );
+
+
+    if (motivo === null) {
+        return;
+    }
+
+
+    if (!motivo.trim()) {
+
+        alert(
+            'Debes indicar un motivo para devolver el ticket.'
+        );
+
+        return;
+    }
+
+
+    try {
+
+        const { error } = await supabaseClient
+            .from('tickets')
+            .update({
+                estado: 'en-proceso'
+            })
+            .eq('id', ticketId)
+            .eq('estado', 'pendiente-verificacion');
+
+
+        if (error) {
+
+            console.error(
+                '❌ Error al devolver ticket:',
+                error
+            );
+
+            alert(
+                'No fue posible devolver el ticket a la brigada.'
+            );
+
+            return;
+        }
+
+
+        alert(
+            'Ticket ' +
+            numeroTicket +
+            ' devuelto a la brigada.'
+        );
+
+
+        await cargarTicketsDesdeSupabase();
+
+
+    } catch (error) {
+
+        console.error(
+            '❌ Error inesperado al devolver ticket:',
+            error
+        );
+
+        alert(
+            'Ocurrió un error inesperado al devolver el ticket.'
+        );
+    }
+}
 
 
         // =====================================================

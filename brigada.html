@@ -173,7 +173,39 @@
             background: #e3f2fd;
             color: #0d47a1;
         }
+        .iniciar-btn {
+    background: #fff3e0;
+    color: #e65100;
+        }   
 
+        .completar-btn {
+    background: #e8f5e9;
+    color: #1b5e20;
+}
+
+.finalizacion-box {
+    width: 100%;
+    margin-top: 12px;
+    padding: 14px;
+    background: #f7f9f9;
+    border-radius: 10px;
+    display: grid;
+    gap: 10px;
+}
+
+.finalizacion-box input,
+.finalizacion-box textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+}
+
+.finalizacion-box textarea {
+    resize: vertical;
+}
 
         /* =====================================================
            📭 SIN TRABAJOS
@@ -511,6 +543,66 @@
                             ''
                         }
 
+                        ${
+    ticket.estado === 'asignado'
+    ?
+    `
+        <button
+            class="btn iniciar-btn"
+            onclick="iniciarTrabajo(
+                ${ticket.id},
+                '${ticket.numero}'
+            )"
+        >
+            🔧 Iniciar trabajo
+        </button>
+    `
+    :
+    ''
+            }
+    
+            ${
+    ticket.estado === 'en-proceso'
+    ?
+    `
+        <div class="finalizacion-box">
+
+            <label>
+                <strong>📸 Foto del trabajo terminado:</strong>
+            </label>
+
+            <input
+                type="file"
+                id="foto-resolucion-${ticket.id}"
+                accept="image/*"
+                capture="environment"
+            >
+
+            <label>
+                <strong>📝 Comentario de resolución:</strong>
+            </label>
+
+            <textarea
+                id="comentario-resolucion-${ticket.id}"
+                placeholder="Ejemplo: Se reparó el hoyo y se retiraron los escombros."
+                rows="3"
+            ></textarea>
+
+            <button
+                class="btn completar-btn"
+                onclick="completarTrabajo(
+                    ${ticket.id},
+                    '${ticket.numero}'
+                )"
+            >
+                ✅ Enviar para verificación
+            </button>
+
+        </div>
+    `
+    :
+    ''
+}
                     </div>
                 `;
 
@@ -600,6 +692,221 @@
             }
         }
 
+
+        // =====================================================
+// 🔧 INICIAR TRABAJO
+// Cambia el estado del ticket de "asignado" a
+// "en-proceso" y guarda el cambio en Supabase.
+// =====================================================
+
+async function iniciarTrabajo(ticketId, numeroTicket) {
+
+    const confirmar = confirm(
+        '¿Deseas iniciar el trabajo del ticket ' +
+        numeroTicket +
+        '?'
+    );
+
+    if (!confirmar) {
+        return;
+    }
+
+
+    try {
+
+        const { error } = await supabaseClient
+            .from('tickets')
+            .update({
+                estado: 'en-proceso'
+            })
+            .eq('id', ticketId)
+            .eq('brigada_id', BRIGADA_ID_PRUEBA)
+            .eq('estado', 'asignado');
+
+
+        if (error) {
+
+            console.error(
+                '❌ Error al iniciar trabajo:',
+                error
+            );
+
+            alert(
+                'No fue posible iniciar el trabajo.'
+            );
+
+            return;
+        }
+
+
+        alert(
+            'El trabajo del ticket ' +
+            numeroTicket +
+            ' ha sido iniciado correctamente.'
+        );
+
+
+        await cargarTrabajos();
+
+
+    } catch (error) {
+
+        console.error(
+            '❌ Error inesperado al iniciar trabajo:',
+            error
+        );
+
+        alert(
+            'Ocurrió un error inesperado al iniciar el trabajo.'
+        );
+    }
+}
+
+    // =====================================================
+// 📸 COMPLETAR TRABAJO Y ENVIAR PARA VERIFICACIÓN
+// Sube la fotografía de resolución a Supabase Storage,
+// guarda el comentario y cambia el estado del ticket a
+// "pendiente-verificacion".
+// =====================================================
+
+async function completarTrabajo(ticketId, numeroTicket) {
+
+    const inputFoto = document.getElementById(
+        'foto-resolucion-' + ticketId
+    );
+
+    const inputComentario = document.getElementById(
+        'comentario-resolucion-' + ticketId
+    );
+
+
+    // -------------------------------------------------
+    // VERIFICAR QUE SE HAYA SELECCIONADO UNA FOTO
+    // -------------------------------------------------
+
+    if (!inputFoto || !inputFoto.files.length) {
+
+        alert(
+            'Debes seleccionar una foto del trabajo terminado.'
+        );
+
+        return;
+    }
+
+
+    const archivo = inputFoto.files[0];
+
+    const comentario = inputComentario
+        ? inputComentario.value.trim()
+        : '';
+
+
+    // -------------------------------------------------
+    // CREAR UN NOMBRE ÚNICO PARA LA FOTOGRAFÍA
+    // -------------------------------------------------
+
+    const extension = archivo.name
+        .split('.')
+        .pop();
+
+    const nombreArchivo =
+        numeroTicket +
+        '-' +
+        Date.now() +
+        '.' +
+        extension;
+
+    const rutaArchivo =
+        'resoluciones/' +
+        nombreArchivo;
+
+
+    try {
+
+        // -------------------------------------------------
+        // SUBIR FOTO AL BUCKET DE RESOLUCIONES
+        // -------------------------------------------------
+
+        const { error: errorSubida } = await supabaseClient
+            .storage
+            .from('evidencias-resoluciones')
+            .upload(
+                rutaArchivo,
+                archivo
+            );
+
+
+        if (errorSubida) {
+
+            console.error(
+                '❌ Error al subir evidencia de resolución:',
+                errorSubida
+            );
+
+            alert(
+                'No fue posible subir la foto del trabajo terminado.'
+            );
+
+            return;
+        }
+
+
+        // -------------------------------------------------
+        // ACTUALIZAR EL TICKET EN SUPABASE
+        // -------------------------------------------------
+
+        const { error: errorActualizacion } = await supabaseClient
+            .from('tickets')
+            .update({
+                foto_resolucion_url: rutaArchivo,
+                comentario_resolucion: comentario,
+                completado_en: new Date().toISOString(),
+                estado: 'pendiente-verificacion'
+            })
+            .eq('id', ticketId)
+            .eq('brigada_id', BRIGADA_ID_PRUEBA)
+            .eq('estado', 'en-proceso');
+
+
+        if (errorActualizacion) {
+
+            console.error(
+                '❌ Error al actualizar ticket:',
+                errorActualizacion
+            );
+
+            alert(
+                'La foto fue subida, pero no fue posible actualizar el ticket.'
+            );
+
+            return;
+        }
+
+
+        // -------------------------------------------------
+        // CONFIRMACIÓN
+        // -------------------------------------------------
+
+        alert(
+            'Trabajo enviado correctamente para verificación.'
+        );
+
+
+        await cargarTrabajos();
+
+
+    } catch (error) {
+
+        console.error(
+            '❌ Error inesperado al completar trabajo:',
+            error
+        );
+
+        alert(
+            'Ocurrió un error inesperado al enviar el trabajo.'
+        );
+    }
+}
 
         // =====================================================
         // 🚀 INICIALIZAR PANEL DE BRIGADA
