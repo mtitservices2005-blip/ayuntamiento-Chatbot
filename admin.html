@@ -286,6 +286,49 @@
            📱 DISEÑO RESPONSIVE
            ===================================================== */
 
+        /* =====================================================
+   📊 DASHBOARD DE RESUMEN MUNICIPAL
+   ===================================================== */
+
+.dashboard-resumen {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.stat-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+}
+
+.stat-label {
+    color: #666;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.stat-number {
+    color: #075e54;
+    font-size: 30px;
+    font-weight: 700;
+}
+
         @media (max-width: 800px) {
 
             .stats {
@@ -295,6 +338,18 @@
             .ticket-info {
                 grid-template-columns: 1fr;
             }
+
+            .dashboard-resumen {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.stat-card {
+    padding: 15px 10px;
+}
+
+.stat-number {
+    font-size: 24px;
+}
         }
 
         @media (max-width: 500px) {
@@ -359,34 +414,55 @@
 
     <main class="container">
 
+<!-- =====================================================
+ 📊 RESUMEN DE GESTIÓN MUNICIPAL
+ Muestra indicadores generales de los tickets cargados
+ para el municipio actual.
+ ===================================================== -->
 
-        <!-- =================================================
-             📊 RESUMEN DE TICKETS
-             ================================================= -->
+<!-- =====================================================
+     📊 RESUMEN DE GESTIÓN MUNICIPAL
+     ===================================================== -->
 
-        <section class="stats">
+<div class="dashboard-resumen">
 
-            <div class="stat-card">
-                <div class="number" id="totalTickets">4</div>
-                <div class="label">🎫 Total tickets</div>
-            </div>
+    <div class="stat-card">
+        <div class="stat-icon">🎫</div>
+        <div class="stat-label">Total de tickets</div>
+        <div class="stat-number" id="statTotal">0</div>
+    </div>
 
-            <div class="stat-card">
-                <div class="number" id="ticketsRecibidos">1</div>
-                <div class="label">🟡 Recibidos</div>
-            </div>
+    <div class="stat-card">
+        <div class="stat-icon">🟡</div>
+        <div class="stat-label">Recibidos</div>
+        <div class="stat-number" id="statRecibidos">0</div>
+    </div>
 
-            <div class="stat-card">
-                <div class="number" id="ticketsProceso">2</div>
-                <div class="label">🟠 En proceso</div>
-            </div>
+    <div class="stat-card">
+        <div class="stat-icon">🟠</div>
+        <div class="stat-label">En proceso</div>
+        <div class="stat-number" id="statProceso">0</div>
+    </div>
 
-            <div class="stat-card">
-                <div class="number" id="ticketsResueltos">1</div>
-                <div class="label">🟢 Resueltos</div>
-            </div>
+    <div class="stat-card">
+        <div class="stat-icon">🟣</div>
+        <div class="stat-label">Por verificar</div>
+        <div class="stat-number" id="statVerificacion">0</div>
+    </div>
 
-        </section>
+    <div class="stat-card">
+        <div class="stat-icon">🟢</div>
+        <div class="stat-label">Resueltos</div>
+        <div class="stat-number" id="statResueltos">0</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon">📈</div>
+        <div class="stat-label">Tasa de resolución</div>
+        <div class="stat-number" id="statTasaResolucion">0%</div>
+    </div>
+
+</div>
 
 
         <!-- =================================================
@@ -586,10 +662,15 @@ async function cargarTicketsDesdeSupabase() {
 
 
         // -------------------------------------------------
-        // GUARDAR LOS TICKETS RECIBIDOS
-        // -------------------------------------------------
+// GUARDAR LOS TICKETS RECIBIDOS
+// -------------------------------------------------
 
-        tickets = data || [];
+console.log('📊 Datos recibidos de Supabase:', data);
+console.log('📊 Cantidad de tickets:', data ? data.length : 0);
+
+actualizarResumenDashboard(data || []);
+
+tickets = data || [];
 
 
         // -------------------------------------------------
@@ -655,6 +736,62 @@ function formatearFecha(fechaISO) {
     );
 }
 
+// =====================================================
+// 📊 ACTUALIZAR ESTADÍSTICAS DEL DASHBOARD
+// Calcula los indicadores usando únicamente los tickets
+// cargados para el municipio actual.
+// =====================================================
+
+// =====================================================
+// 📊 ACTUALIZAR ESTADÍSTICAS DEL DASHBOARD
+// =====================================================
+
+function actualizarResumenDashboard(tickets) {
+
+    const total = tickets.length;
+
+    const recibidos = tickets.filter(function(ticket) {
+        return ticket.estado === 'recibido';
+    }).length;
+
+    const enProceso = tickets.filter(function(ticket) {
+        return (
+            ticket.estado === 'asignado' ||
+            ticket.estado === 'en-proceso'
+        );
+    }).length;
+
+    const porVerificar = tickets.filter(function(ticket) {
+        return ticket.estado === 'pendiente-verificacion';
+    }).length;
+
+    const resueltos = tickets.filter(function(ticket) {
+        return ticket.estado === 'resuelto';
+    }).length;
+
+    const tasaResolucion = total > 0
+        ? ((resueltos / total) * 100).toFixed(1)
+        : '0.0';
+
+
+    document.getElementById('statTotal').textContent =
+        total;
+
+    document.getElementById('statRecibidos').textContent =
+        recibidos;
+
+    document.getElementById('statProceso').textContent =
+        enProceso;
+
+    document.getElementById('statVerificacion').textContent =
+        porVerificar;
+
+    document.getElementById('statResueltos').textContent =
+        resueltos;
+
+    document.getElementById('statTasaResolucion').textContent =
+        tasaResolucion + '%';
+}
 
         // =====================================================
         // 🎫 MOSTRAR TICKETS
@@ -1056,7 +1193,7 @@ async function asignarBrigada(ticketId, numeroTicket) {
             ticket.estado = nuevoEstado;
 
             mostrarTickets();
-            actualizarEstadisticas();
+            actualizarResumenDashboard(tickets);
         }
 
 
@@ -1064,30 +1201,6 @@ async function asignarBrigada(ticketId, numeroTicket) {
         // 📊 ACTUALIZAR ESTADÍSTICAS
         // Recalcula automáticamente las tarjetas superiores.
         // =====================================================
-
-        function actualizarEstadisticas() {
-
-            document.getElementById('totalTickets').textContent =
-                tickets.length;
-
-            document.getElementById('ticketsRecibidos').textContent =
-                tickets.filter(function(ticket) {
-                    return ticket.estado === 'recibido';
-                }).length;
-
-            document.getElementById('ticketsProceso').textContent =
-                tickets.filter(function(ticket) {
-                    return (
-                        ticket.estado === 'asignado' ||
-                        ticket.estado === 'en-proceso'
-                    );
-                }).length;
-
-            document.getElementById('ticketsResueltos').textContent =
-                tickets.filter(function(ticket) {
-                    return ticket.estado === 'resuelto';
-                }).length;
-        }
 
 
         // =====================================================
