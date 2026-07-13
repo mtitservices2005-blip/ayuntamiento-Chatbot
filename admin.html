@@ -474,12 +474,73 @@ const supabaseClient = supabase.createClient(
         // =====================================================
 
         let tickets = [];
+// =====================================================
+// 👷 LISTA DE BRIGADAS
+// Se cargará automáticamente desde Supabase.
+// =====================================================
+
+let brigadas = [];
 
 // =====================================================
 // 🗄️ CARGAR TICKETS DESDE SUPABASE
 // Consulta la tabla "tickets" y carga los reportes reales,
 // ordenando primero los más recientes.
 // =====================================================
+// =====================================================
+// 👷 CARGAR BRIGADAS DESDE SUPABASE
+// Consulta las brigadas activas disponibles para asignar
+// los tickets del Ayuntamiento.
+// =====================================================
+
+async function cargarBrigadasDesdeSupabase() {
+
+    try {
+
+        const { data, error } = await supabaseClient
+            .from('brigadas')
+            .select('*')
+            .eq('activa', true)
+            .order('nombre', {
+                ascending: true
+            });
+
+
+        // -------------------------------------------------
+        // VERIFICAR SI SUPABASE DEVOLVIÓ UN ERROR
+        // -------------------------------------------------
+
+        if (error) {
+
+            console.error(
+                '❌ Error al cargar brigadas:',
+                error
+            );
+
+            return;
+        }
+
+
+        // -------------------------------------------------
+        // GUARDAR LAS BRIGADAS RECIBIDAS
+        // -------------------------------------------------
+
+        brigadas = data || [];
+
+
+        console.log(
+            '✅ Brigadas cargadas desde Supabase:',
+            brigadas
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            '❌ Error inesperado al cargar brigadas:',
+            error
+        );
+    }
+}
 
 async function cargarTicketsDesdeSupabase() {
 
@@ -649,7 +710,23 @@ function formatearFecha(fechaISO) {
                             <strong>🌐 GPS:</strong>
                             ${ticket.latitud}, ${ticket.longitud}
                         </div>
-
+                        
+                        ${
+                       ticket.brigada_id
+                        ?
+                        `
+        <div>
+            <strong>👷 Brigada responsable:</strong>
+            ${
+                brigadas.find(function(brigada) {
+                    return brigada.id === ticket.brigada_id;
+                })?.nombre || 'Brigada no encontrada'
+            }
+        </div>
+    `
+    :
+    ''
+}    
                     </div>
 
 
@@ -688,43 +765,47 @@ function formatearFecha(fechaISO) {
                         }
 
 
-                        <select
-                            class="status-select"
-                            onchange="
-                                cambiarEstado(
-                                    '${ticket.numero}',
-                                    this.value
-                                )
-                            "
-                        >
-                            <option
-                                value="recibido"
-                                ${ticket.estado === 'recibido' ? 'selected' : ''}
-                            >
-                                🟡 Recibido
-                            </option>
+                        
+                        
+                        ${
+    ticket.estado === 'recibido'
+    ?
+    `
+        <select
+            id="brigada-${ticket.id}"
+            class="status-select"
+        >
+            <option value="">
+                👷 Seleccionar brigada
+            </option>
 
-                            <option
-                                value="asignado"
-                                ${ticket.estado === 'asignado' ? 'selected' : ''}
-                            >
-                                🔵 Asignado
-                            </option>
+            ${
+                brigadas.map(function(brigada) {
 
-                            <option
-                                value="en-proceso"
-                                ${ticket.estado === 'en-proceso' ? 'selected' : ''}
-                            >
-                                🟠 En proceso
-                            </option>
+                    return `
+                        <option value="${brigada.id}">
+                            ${brigada.nombre}
+                        </option>
+                    `;
 
-                            <option
-                                value="resuelto"
-                                ${ticket.estado === 'resuelto' ? 'selected' : ''}
-                            >
-                                🟢 Resuelto
-                            </option>
-                        </select>
+                }).join('')
+            }
+
+        </select>
+
+        <button
+            class="action-btn"
+            onclick="asignarBrigada(
+                ${ticket.id},
+                '${ticket.numero}'
+            )"
+        >
+            👷 Asignar ticket
+        </button>
+    `
+    :
+    ''
+}
 
                     </div>
                 `;
@@ -733,7 +814,137 @@ function formatearFecha(fechaISO) {
             });
         }
 
+// =====================================================
+// 👷 ASIGNAR BRIGADA A UN TICKET
+// Por ahora únicamente comprueba qué brigada seleccionó
+// el administrador. En el próximo paso guardaremos la
+// asignación permanentemente en Supabase.
+// =====================================================
 
+// =====================================================
+// 👷 ASIGNAR BRIGADA A UN TICKET
+// Guarda la brigada responsable en Supabase y cambia
+// automáticamente el estado del ticket a "asignado".
+// =====================================================
+
+async function asignarBrigada(ticketId, numeroTicket) {
+
+    // -------------------------------------------------
+    // OBTENER EL SELECTOR DEL TICKET
+    // -------------------------------------------------
+
+    const selector = document.getElementById(
+        'brigada-' + ticketId
+    );
+
+
+    // -------------------------------------------------
+    // VERIFICAR QUE SE HAYA SELECCIONADO UNA BRIGADA
+    // -------------------------------------------------
+
+    if (!selector || !selector.value) {
+
+        alert(
+            'Selecciona una brigada antes de asignar el ticket.'
+        );
+
+        return;
+    }
+
+
+    // -------------------------------------------------
+    // IDENTIFICAR LA BRIGADA SELECCIONADA
+    // -------------------------------------------------
+
+    const brigadaId = Number(selector.value);
+
+    const brigadaSeleccionada = brigadas.find(
+        function(brigada) {
+            return brigada.id === brigadaId;
+        }
+    );
+
+
+    if (!brigadaSeleccionada) {
+
+        alert(
+            'No fue posible identificar la brigada seleccionada.'
+        );
+
+        return;
+    }
+
+
+    try {
+
+        // -------------------------------------------------
+        // GUARDAR ASIGNACIÓN Y NUEVO ESTADO EN SUPABASE
+        // -------------------------------------------------
+
+        const { error } = await supabaseClient
+            .from('tickets')
+            .update({
+                brigada_id: brigadaId,
+                estado: 'asignado'
+            })
+            .eq('id', ticketId);
+
+
+        // -------------------------------------------------
+        // COMPROBAR SI OCURRIÓ UN ERROR
+        // -------------------------------------------------
+
+        if (error) {
+
+            console.error(
+                '❌ Error al asignar brigada:',
+                error
+            );
+
+            alert(
+                'No fue posible asignar la brigada.'
+            );
+
+            return;
+        }
+
+
+        // -------------------------------------------------
+        // CONFIRMACIÓN
+        // -------------------------------------------------
+
+        alert(
+            'Ticket ' +
+            numeroTicket +
+            ' asignado correctamente a ' +
+            brigadaSeleccionada.nombre +
+            '.'
+        );
+
+
+        // -------------------------------------------------
+        // RECARGAR TICKETS DESDE SUPABASE
+        // Esto garantiza que el panel muestre los datos
+        // reales guardados en la base de datos.
+        // -------------------------------------------------
+
+        await cargarTicketsDesdeSupabase();
+
+
+    } catch (error) {
+
+        console.error(
+            '❌ Error inesperado al asignar brigada:',
+            error
+        );
+
+        alert(
+            'Ocurrió un error inesperado al asignar la brigada.'
+        );
+    }
+}
+
+    
         // =====================================================
         // 🚦 CAMBIAR ESTADO DE UN TICKET
         // Actualiza temporalmente el estado seleccionado.
@@ -944,8 +1155,19 @@ async function verFoto(rutaFoto) {
         // se carga por primera vez la página.
         // =====================================================
 
-        mostrarTickets();
-        cargarTicketsDesdeSupabase();
+        // =====================================================
+// 🚀 INICIALIZAR PANEL
+// Carga primero las brigadas y después los tickets.
+// =====================================================
+
+async function inicializarPanel() {
+
+    await cargarBrigadasDesdeSupabase();
+
+    await cargarTicketsDesdeSupabase();
+}
+
+inicializarPanel();
 
     </script>
 
