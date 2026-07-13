@@ -558,27 +558,29 @@ const rutaFoto =
 
         const nuevoTicket = {
 
-            numero: numeroTicket,
+    numero: numeroTicket,
 
-            categoria: datosReporte.categoria,
+    categoria: datosReporte.categoria,
 
-            sector: datosReporte.sector,
+    sector: datosReporte.sector,
 
-            ubicacion: datosReporte.ubicacion,
+    ubicacion: datosReporte.ubicacion,
 
-            latitud: datosReporte.latitud,
+    latitud: datosReporte.latitud,
 
-            longitud: datosReporte.longitud,
+    longitud: datosReporte.longitud,
 
-            descripcion: datosReporte.descripcion,
+    descripcion: datosReporte.descripcion,
 
-            // La fotografía se conectará posteriormente
-            // mediante Supabase Storage.
-            foto_url: rutaFoto,
+    foto_url: rutaFoto,
 
-            // Todo nuevo reporte comienza como recibido.
-            estado: 'recibido'
-        };
+    // Todo nuevo reporte comienza como recibido.
+    estado: 'recibido',
+
+    // Este chatbot pertenece al Ayuntamiento de Laguna Salada.
+    // El municipio se identifica mediante su ID en Supabase.
+    municipio_id: 1
+};
 
 
         // -------------------------------------------------
