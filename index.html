@@ -285,7 +285,39 @@
     style="display: none;"
 >
     </div>
+
+
+    <!-- =====================================================
+     🗄️ LIBRERÍA SUPABASE
+     Permite conectar el chatbot con la base de datos real.
+     ===================================================== -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
+
+// =====================================================
+// 🗄️ CONFIGURACIÓN DE SUPABASE
+// Conecta el chatbot con la base de datos real.
+// =====================================================
+
+const SUPABASE_URL =
+    'https://gjtunejwnpsutyrrbfdc.supabase.co';
+
+const SUPABASE_KEY =
+    'sb_publishable_QW5-4Irj3BoivYe1fIIH9Q_ll14ktiE';
+
+// Crea el cliente para comunicarse con Supabase.
+const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+
+// =====================================================
+// 💬 ELEMENTOS PRINCIPALES DEL CHATBOT
+// =====================================================
+
     const input = document.querySelector('.input-area input');
     const button = document.querySelector('.input-area button');
     const chatArea = document.querySelector('.chat-area');
@@ -388,14 +420,242 @@ function mostrarImagenEnChat(archivo) {
     lector.readAsDataURL(archivo);
 }
 
-function generarTicket() {
-    const numeroTicket =
-        'LS-2026-' + Math.floor(1000 + Math.random() * 9000);
+// =====================================================
+// 🗄️ GUARDAR TICKET EN SUPABASE
+// Envía los datos recopilados durante el reporte a la
+// tabla "tickets" de nuestra base de datos real.
+//
+// Devuelve:
+// true  = ticket guardado correctamente.
+// false = ocurrió un error durante el guardado.
+// =====================================================
 
-    const evidencia = datosReporte.foto
-        ? '📸 Evidencia fotográfica: Adjunta'
-        : '📸 Evidencia fotográfica: No adjunta';
+// =====================================================
+// 📸 SUBIR EVIDENCIA FOTOGRÁFICA A SUPABASE STORAGE
+// Recibe el número del ticket y sube la fotografía
+// seleccionada por el ciudadano al bucket:
+//
+// evidencias-tickets
+//
+// Devuelve:
+// - La ruta del archivo si la subida fue exitosa.
+// - null si no hay foto o si ocurre algún error.
+// =====================================================
 
+async function subirEvidenciaASupabase(numeroTicket) {
+
+    // -------------------------------------------------
+    // VERIFICAR SI EL CIUDADANO ADJUNTÓ UNA FOTO
+    // -------------------------------------------------
+
+    if (!fotoSeleccionada) {
+        return null;
+    }
+
+
+    try {
+
+        // -------------------------------------------------
+        // OBTENER LA EXTENSIÓN ORIGINAL DEL ARCHIVO
+        // Ejemplo: foto.jpg → jpg
+        // -------------------------------------------------
+
+        const partesNombre = fotoSeleccionada.name.split('.');
+
+        const extension =
+            partesNombre.length > 1
+                ? partesNombre.pop().toLowerCase()
+                : 'jpg';
+
+
+        // -------------------------------------------------
+        // CREAR UNA RUTA ÚNICA PARA LA EVIDENCIA
+        //
+        // Ejemplo:
+        // LS-2026-9775/1720876543210.jpg
+        // -------------------------------------------------
+
+        const rutaArchivo =
+            numeroTicket +
+            '/' +
+            Date.now() +
+            '.' +
+            extension;
+
+
+        // -------------------------------------------------
+        // SUBIR LA FOTO AL BUCKET DE SUPABASE
+        // -------------------------------------------------
+
+        const { error } = await supabaseClient
+            .storage
+            .from('evidencias-tickets')
+            .upload(
+                rutaArchivo,
+                fotoSeleccionada,
+                {
+                    cacheControl: '3600',
+                    upsert: false
+                }
+            );
+
+
+        // -------------------------------------------------
+        // COMPROBAR SI OCURRIÓ UN ERROR
+        // -------------------------------------------------
+
+        if (error) {
+
+            console.error(
+                '❌ Error al subir evidencia a Supabase:',
+                error
+            );
+
+            return null;
+        }
+
+
+        // -------------------------------------------------
+        // SUBIDA EXITOSA
+        // Guardamos la ruta, no una URL pública.
+        // Esto nos permitirá mantener las fotos privadas.
+        // -------------------------------------------------
+
+        console.log(
+            '✅ Evidencia subida correctamente:',
+            rutaArchivo
+        );
+
+        return rutaArchivo;
+
+
+    } catch (error) {
+
+        console.error(
+            '❌ Error inesperado al subir evidencia:',
+            error
+        );
+
+        return null;
+    }
+}
+
+async function guardarTicketEnSupabase(numeroTicket) {
+
+    try {
+// =====================================================
+// 📸 SUBIR EVIDENCIA ANTES DE GUARDAR EL TICKET
+// Si el ciudadano no adjuntó una foto, el resultado
+// será null y el ticket podrá guardarse normalmente.
+// =====================================================
+
+const rutaFoto =
+    await subirEvidenciaASupabase(numeroTicket);
+
+        // -------------------------------------------------
+        // PREPARAR LOS DATOS DEL NUEVO TICKET
+        // -------------------------------------------------
+
+        const nuevoTicket = {
+
+            numero: numeroTicket,
+
+            categoria: datosReporte.categoria,
+
+            sector: datosReporte.sector,
+
+            ubicacion: datosReporte.ubicacion,
+
+            latitud: datosReporte.latitud,
+
+            longitud: datosReporte.longitud,
+
+            descripcion: datosReporte.descripcion,
+
+            // La fotografía se conectará posteriormente
+            // mediante Supabase Storage.
+            foto_url: rutaFoto,
+
+            // Todo nuevo reporte comienza como recibido.
+            estado: 'recibido'
+        };
+
+
+        // -------------------------------------------------
+        // INSERTAR EL TICKET EN LA BASE DE DATOS
+        // -------------------------------------------------
+
+        const { error } = await supabaseClient
+            .from('tickets')
+            .insert([nuevoTicket]);
+
+
+        // -------------------------------------------------
+        // COMPROBAR SI SUPABASE DEVOLVIÓ UN ERROR
+        // -------------------------------------------------
+
+        if (error) {
+
+            console.error(
+                '❌ Error al guardar ticket en Supabase:',
+                error
+            );
+
+            return false;
+        }
+
+
+        // -------------------------------------------------
+        // GUARDADO EXITOSO
+        // -------------------------------------------------
+
+        console.log(
+            '✅ Ticket guardado correctamente en Supabase:',
+            numeroTicket
+        );
+
+        return true;
+
+    } catch (error) {
+
+        // Captura cualquier error inesperado.
+        console.error(
+            '❌ Error inesperado al guardar el ticket:',
+            error
+        );
+
+        return false;
+    }
+}
+
+async function generarTicket() {
+const numeroTicket =
+    'LS-2026-' + Math.floor(1000 + Math.random() * 9000);
+
+
+// =====================================================
+// 🗄️ GUARDAR TICKET EN LA BASE DE DATOS REAL
+// Espera la respuesta de Supabase antes de continuar.
+// =====================================================
+
+const guardadoExitoso =
+    await guardarTicketEnSupabase(numeroTicket);
+
+if (!guardadoExitoso) {
+
+    agregarMensaje(
+        '⚠️ No pudimos registrar tu reporte en este momento. ' +
+        'Por favor, inténtalo nuevamente en unos minutos.',
+        'asistente'
+    );
+
+    return;
+}
+
+const evidencia = datosReporte.foto
+    ? '📸 Evidencia fotográfica: Adjunta'
+    : '📸 Evidencia fotográfica: No adjunta';
+        
     const respuesta =
         '🎫 REPORTE CREADO EXITOSAMENTE\n\n' +
         'Ticket: ' + numeroTicket + '\n' +
@@ -434,6 +694,8 @@ function generarTicket() {
         foto: false
     };
 }
+
+
 function mostrarCategoriasReporte() {
     const contenedor = document.createElement('div');
     contenedor.classList.add('selection-options');

@@ -439,6 +439,31 @@
 
     </main>
 
+<!-- =====================================================
+     🗄️ LIBRERÍA DE SUPABASE
+     Permite al panel conectarse con la base de datos real.
+     ===================================================== -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script> 
+
+// =====================================================
+// 🗄️ CONFIGURACIÓN DE SUPABASE
+// Conecta el panel administrativo con la base de datos.
+// =====================================================
+
+const SUPABASE_URL =
+    'https://gjtunejwnpsutyrrbfdc.supabase.co';
+
+const SUPABASE_KEY =
+    'sb_publishable_QW5-4Irj3BoivYe1fIIH9Q_ll14ktiE';
+
+const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+</script>
 
     <script>
 
@@ -448,66 +473,70 @@
         // real y se actualizarán automáticamente.
         // =====================================================
 
-        let tickets = [
+        let tickets = [];
 
-            {
-                numero: 'LS-2026-0001',
-                categoria: '🗑️ Basura acumulada',
-                sector: 'Las Flores',
-                ubicacion: 'Frente al parque',
-                latitud: 19.650421,
-                longitud: -71.083274,
-                descripcion:
-                    'Hay varias bolsas de basura acumuladas desde hace tres días.',
-                foto: 'images/palacio-municipal.png',
-                estado: 'recibido',
-                fecha: '13/07/2026 9:30 AM'
-            },
+// =====================================================
+// 🗄️ CARGAR TICKETS DESDE SUPABASE
+// Consulta la tabla "tickets" y carga los reportes reales,
+// ordenando primero los más recientes.
+// =====================================================
 
-            {
-                numero: 'LS-2026-0002',
-                categoria: '💡 Alumbrado público',
-                sector: 'Pueblo Nuevo',
-                ubicacion: 'Calle principal, próximo al colmado',
-                latitud: 19.648900,
-                longitud: -71.081500,
-                descripcion:
-                    'Dos lámparas llevan varios días apagadas.',
-                foto: '',
-                estado: 'asignado',
-                fecha: '13/07/2026 10:15 AM'
-            },
+async function cargarTicketsDesdeSupabase() {
 
-            {
-                numero: 'LS-2026-0003',
-                categoria: '🕳️ Calle deteriorada',
-                sector: 'San Antonio',
-                ubicacion: 'Entrada del sector',
-                latitud: 19.653200,
-                longitud: -71.079800,
-                descripcion:
-                    'Existe un hoyo grande que dificulta el tránsito de vehículos.',
-                foto: '',
-                estado: 'en-proceso',
-                fecha: '13/07/2026 11:45 AM'
-            },
+    try {
 
-            {
-                numero: 'LS-2026-0004',
-                categoria: '🌳 Árbol caído',
-                sector: 'Puerto Rico',
-                ubicacion: 'Próximo a la cancha',
-                latitud: 19.647700,
-                longitud: -71.085100,
-                descripcion:
-                    'Un árbol cayó parcialmente sobre la vía.',
-                foto: '',
-                estado: 'resuelto',
-                fecha: '13/07/2026 12:20 PM'
-            }
+        const { data, error } = await supabaseClient
+            .from('tickets')
+            .select('*')
+            .order('creado_en', {
+                ascending: false
+            });
 
-        ];
 
+        // -------------------------------------------------
+        // VERIFICAR SI SUPABASE DEVOLVIÓ UN ERROR
+        // -------------------------------------------------
+
+        if (error) {
+
+            console.error(
+                '❌ Error al cargar tickets:',
+                error
+            );
+
+            return;
+        }
+
+
+        // -------------------------------------------------
+        // GUARDAR LOS TICKETS RECIBIDOS
+        // -------------------------------------------------
+
+        tickets = data || [];
+
+
+        // -------------------------------------------------
+        // ACTUALIZAR EL PANEL
+        // -------------------------------------------------
+
+        mostrarTickets();
+        actualizarEstadisticas();
+
+
+        console.log(
+            '✅ Tickets cargados desde Supabase:',
+            tickets.length
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            '❌ Error inesperado al cargar tickets:',
+            error
+        );
+    }
+}
 
         // =====================================================
         // 🎨 OBTENER NOMBRE VISIBLE DEL ESTADO
@@ -526,6 +555,27 @@
 
             return nombres[estado] || estado;
         }
+
+// =====================================================
+// 🗓️ FORMATEAR FECHA
+// Convierte la fecha técnica de Supabase en una fecha
+// legible para el personal del Ayuntamiento.
+// =====================================================
+
+function formatearFecha(fechaISO) {
+
+    if (!fechaISO) {
+        return 'Fecha no disponible';
+    }
+
+    return new Date(fechaISO).toLocaleString(
+        'es-DO',
+        {
+            dateStyle: 'short',
+            timeStyle: 'short'
+        }
+    );
+}
 
 
         // =====================================================
@@ -587,7 +637,7 @@
 
                         <div>
                             <strong>🗓️ Fecha:</strong>
-                            ${ticket.fecha}
+                            ${formatearFecha (ticket.creado_en)}
                         </div>
 
                         <div>
@@ -623,12 +673,12 @@
 
 
                         ${
-                            ticket.foto
+                            ticket.foto_url
                             ?
                             `
                             <button
                                 class="action-btn photo-btn"
-                                onclick="verFoto('${ticket.foto}')"
+                                onclick="verFoto('${ticket.foto_url}')"
                             >
                                 📸 Ver evidencia
                             </button>
@@ -814,14 +864,78 @@
 
 
         // =====================================================
-        // 📸 VER EVIDENCIA FOTOGRÁFICA
-        // Abre en una nueva pestaña la fotografía asociada
-        // al reporte ciudadano.
-        // =====================================================
+// 📸 VER EVIDENCIA FOTOGRÁFICA
+// Genera temporalmente una URL firmada para acceder a
+// una evidencia almacenada en un bucket privado.
+// =====================================================
 
-        function verFoto(rutaFoto) {
-            window.open(rutaFoto, '_blank');
+// =====================================================
+// 📸 VER EVIDENCIA FOTOGRÁFICA
+// Descarga temporalmente la imagen desde Supabase
+// Storage y la abre en una nueva pestaña.
+// =====================================================
+
+async function verFoto(rutaFoto) {
+
+    try {
+
+        const rutaLimpia = rutaFoto.trim();
+
+        console.log(
+            '📸 Intentando abrir evidencia:',
+            rutaLimpia
+        );
+
+        const { data, error } = await supabaseClient
+            .storage
+            .from('evidencias-tickets')
+            .download(rutaLimpia);
+
+
+        if (error) {
+
+            console.error(
+                '❌ Error al descargar evidencia:',
+                error
+            );
+
+            alert(
+                'No fue posible abrir la evidencia fotográfica.'
+            );
+
+            return;
         }
+
+
+        // Crear una URL temporal en el navegador
+        // usando el archivo descargado.
+
+        const urlTemporal = URL.createObjectURL(data);
+
+        window.open(
+            urlTemporal,
+            '_blank'
+        );
+
+
+        console.log(
+            '✅ Evidencia abierta correctamente.'
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            '❌ Error inesperado al abrir evidencia:',
+            error
+        );
+
+        alert(
+            'Ocurrió un error al intentar abrir la evidencia.'
+        );
+    }
+}
+
 
 
         // =====================================================
@@ -831,7 +945,7 @@
         // =====================================================
 
         mostrarTickets();
-        actualizarEstadisticas();
+        cargarTicketsDesdeSupabase();
 
     </script>
 
