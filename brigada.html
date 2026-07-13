@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Panel de Brigada | Laguna Salada</title>
+
+    <style>
+
+        /* =====================================================
+           🎨 CONFIGURACIÓN GENERAL
+           ===================================================== */
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f7f6;
+            color: #263238;
+        }
+
+
+        /* =====================================================
+           👷 ENCABEZADO
+           ===================================================== */
+
+        .header {
+            background: #075e54;
+            color: white;
+            padding: 18px 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 21px;
+        }
+
+        .header p {
+            margin: 6px 0 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+
+        /* =====================================================
+           📦 CONTENEDOR PRINCIPAL
+           ===================================================== */
+
+        .container {
+            max-width: 850px;
+            margin: auto;
+            padding: 18px;
+        }
+
+
+        /* =====================================================
+           👷 INFORMACIÓN DE LA BRIGADA
+           ===================================================== */
+
+        .brigada-info {
+            background: white;
+            padding: 18px;
+            border-radius: 14px;
+            margin-bottom: 18px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.07);
+        }
+
+        .brigada-info h2 {
+            margin: 0 0 6px;
+            color: #075e54;
+            font-size: 20px;
+        }
+
+        .brigada-info p {
+            margin: 0;
+            color: #607d8b;
+            font-size: 14px;
+        }
+
+
+        /* =====================================================
+           🎫 TARJETAS DE TRABAJO
+           ===================================================== */
+
+        .trabajos-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .trabajo-card {
+            background: white;
+            border-radius: 14px;
+            padding: 18px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.07);
+        }
+
+        .ticket-number {
+            color: #075e54;
+            font-size: 17px;
+            font-weight: bold;
+        }
+
+        .categoria {
+            margin-top: 5px;
+            font-weight: 600;
+        }
+
+        .estado {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 6px 10px;
+            border-radius: 20px;
+            background: #dbeafe;
+            color: #1e40af;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .info {
+            margin-top: 14px;
+            display: grid;
+            gap: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .descripcion {
+            background: #f7f9f9;
+            padding: 12px;
+            border-radius: 9px;
+            margin-top: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+
+        /* =====================================================
+           🔘 BOTONES
+           ===================================================== */
+
+        .acciones {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 8px;
+            padding: 10px 13px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .mapa-btn {
+            background: #e8f5e9;
+            color: #1b5e20;
+        }
+
+        .foto-btn {
+            background: #e3f2fd;
+            color: #0d47a1;
+        }
+
+
+        /* =====================================================
+           📭 SIN TRABAJOS
+           ===================================================== */
+
+        .sin-trabajos {
+            background: white;
+            padding: 30px;
+            border-radius: 14px;
+            text-align: center;
+            color: #607d8b;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.07);
+        }
+
+
+        /* =====================================================
+           📱 RESPONSIVE
+           ===================================================== */
+
+        @media (max-width: 600px) {
+
+            .container {
+                padding: 12px;
+            }
+
+            .header h1 {
+                font-size: 19px;
+            }
+
+            .trabajo-card {
+                padding: 15px;
+            }
+
+            .acciones {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <!-- =====================================================
+         👷 ENCABEZADO
+         ===================================================== -->
+
+    <header class="header">
+
+        <h1>👷 Panel de Brigada</h1>
+
+        <p>
+            Ayuntamiento Municipal de Laguna Salada
+        </p>
+
+    </header>
+
+
+    <!-- =====================================================
+         📦 CONTENIDO PRINCIPAL
+         ===================================================== -->
+
+    <main class="container">
+
+
+        <!-- =================================================
+             👷 INFORMACIÓN DE LA BRIGADA
+             ================================================= -->
+
+        <section class="brigada-info">
+
+            <h2 id="nombreBrigada">
+                Cargando brigada...
+            </h2>
+
+            <p id="descripcionBrigada">
+                Cargando información...
+            </p>
+
+        </section>
+
+
+        <!-- =================================================
+             🎫 TRABAJOS ASIGNADOS
+             ================================================= -->
+
+        <section
+            id="trabajosContainer"
+            class="trabajos-grid"
+        >
+        </section>
+
+
+    </main>
+
+
+    <!-- =====================================================
+         🗄️ LIBRERÍA DE SUPABASE
+         ===================================================== -->
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+    <script>
+
+
+        // =====================================================
+        // 🗄️ CONFIGURACIÓN DE SUPABASE
+        // Usa la misma URL y Publishable Key del chatbot
+        // y del panel administrativo.
+        // =====================================================
+
+        const SUPABASE_URL =
+            'https://gjtunejwnpsutyrrbfdc.supabase.co';
+
+        const SUPABASE_KEY =
+            'sb_publishable_QW5-4Irj3BoivYe1fIIH9Q_ll14ktiE';
+
+        const supabaseClient = supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_KEY
+        );
+
+
+        // =====================================================
+        // 👷 BRIGADA DE PRUEBA
+        //
+        // Temporalmente usamos el ID 2 para Obras Públicas.
+        // Más adelante la autenticación determinará
+        // automáticamente qué brigada inició sesión.
+        // =====================================================
+
+        const BRIGADA_ID_PRUEBA = 2;
+
+
+        // =====================================================
+        // 👷 CARGAR INFORMACIÓN DE LA BRIGADA
+        // =====================================================
+
+        async function cargarBrigada() {
+
+            const { data, error } = await supabaseClient
+                .from('brigadas')
+                .select('*')
+                .eq('id', BRIGADA_ID_PRUEBA)
+                .single();
+
+
+            if (error) {
+
+                console.error(
+                    '❌ Error al cargar brigada:',
+                    error
+                );
+
+                document.getElementById(
+                    'nombreBrigada'
+                ).textContent =
+                    'No fue posible cargar la brigada';
+
+                return;
+            }
+
+
+            document.getElementById(
+                'nombreBrigada'
+            ).textContent =
+                '👷 ' + data.nombre;
+
+
+            document.getElementById(
+                'descripcionBrigada'
+            ).textContent =
+                data.descripcion || '';
+        }
+
+
+        // =====================================================
+        // 🎫 CARGAR TRABAJOS ASIGNADOS
+        // Solo carga tickets pertenecientes a esta brigada.
+        // =====================================================
+
+        async function cargarTrabajos() {
+
+            const { data, error } = await supabaseClient
+                .from('tickets')
+                .select('*')
+                .eq(
+                    'brigada_id',
+                    BRIGADA_ID_PRUEBA
+                )
+                .order(
+                    'creado_en',
+                    {
+                        ascending: false
+                    }
+                );
+
+
+            if (error) {
+
+                console.error(
+                    '❌ Error al cargar trabajos:',
+                    error
+                );
+
+                return;
+            }
+
+
+            mostrarTrabajos(data || []);
+        }
+
+
+        // =====================================================
+        // 🎨 MOSTRAR TRABAJOS
+        // =====================================================
+
+        function mostrarTrabajos(trabajos) {
+
+            const contenedor =
+                document.getElementById(
+                    'trabajosContainer'
+                );
+
+
+            contenedor.innerHTML = '';
+
+
+            if (trabajos.length === 0) {
+
+                contenedor.innerHTML = `
+
+                    <div class="sin-trabajos">
+
+                        📭 No hay trabajos asignados
+                        actualmente a esta brigada.
+
+                    </div>
+                `;
+
+                return;
+            }
+
+
+            trabajos.forEach(function(ticket) {
+
+                const tarjeta =
+                    document.createElement('article');
+
+
+                tarjeta.classList.add(
+                    'trabajo-card'
+                );
+
+
+                tarjeta.innerHTML = `
+
+                    <div class="ticket-number">
+                        ${ticket.numero}
+                    </div>
+
+                    <div class="categoria">
+                        ${ticket.categoria}
+                    </div>
+
+                    <span class="estado">
+                        🔵 ${ticket.estado}
+                    </span>
+
+
+                    <div class="info">
+
+                        <div>
+                            <strong>📍 Sector:</strong>
+                            ${ticket.sector}
+                        </div>
+
+                        <div>
+                            <strong>📌 Ubicación:</strong>
+                            ${ticket.ubicacion}
+                        </div>
+
+                    </div>
+
+
+                    <div class="descripcion">
+
+                        <strong>📝 Descripción:</strong>
+                        <br>
+
+                        ${ticket.descripcion}
+
+                    </div>
+
+
+                    <div class="acciones">
+
+                        <button
+                            class="btn mapa-btn"
+                            onclick="
+                                verMapa(
+                                    ${ticket.latitud},
+                                    ${ticket.longitud}
+                                )
+                            "
+                        >
+                            🗺️ Ver ubicación
+                        </button>
+
+
+                        ${
+                            ticket.foto_url
+                            ?
+                            `
+                                <button
+                                    class="btn foto-btn"
+                                    onclick="
+                                        verFoto(
+                                            '${ticket.foto_url}'
+                                        )
+                                    "
+                                >
+                                    📸 Ver evidencia
+                                </button>
+                            `
+                            :
+                            ''
+                        }
+
+                    </div>
+                `;
+
+
+                contenedor.appendChild(tarjeta);
+            });
+        }
+
+
+        // =====================================================
+        // 🗺️ VER UBICACIÓN
+        // =====================================================
+
+        function verMapa(latitud, longitud) {
+
+            const url =
+                'https://www.google.com/maps?q=' +
+                latitud +
+                ',' +
+                longitud;
+
+            window.open(
+                url,
+                '_blank'
+            );
+        }
+
+
+        // =====================================================
+        // 📸 VER EVIDENCIA DEL CIUDADANO
+        // =====================================================
+
+        async function verFoto(rutaFoto) {
+
+            try {
+
+                const rutaLimpia =
+                    rutaFoto.trim();
+
+
+                const { data, error } =
+                    await supabaseClient
+                        .storage
+                        .from(
+                            'evidencias-tickets'
+                        )
+                        .download(
+                            rutaLimpia
+                        );
+
+
+                if (error) {
+
+                    console.error(
+                        '❌ Error al abrir evidencia:',
+                        error
+                    );
+
+                    alert(
+                        'No fue posible abrir la evidencia.'
+                    );
+
+                    return;
+                }
+
+
+                const urlTemporal =
+                    URL.createObjectURL(data);
+
+
+                window.open(
+                    urlTemporal,
+                    '_blank'
+                );
+
+
+            } catch (error) {
+
+                console.error(
+                    '❌ Error inesperado:',
+                    error
+                );
+
+                alert(
+                    'Ocurrió un error al abrir la evidencia.'
+                );
+            }
+        }
+
+
+        // =====================================================
+        // 🚀 INICIALIZAR PANEL DE BRIGADA
+        // =====================================================
+
+        async function inicializarPanelBrigada() {
+
+            await cargarBrigada();
+
+            await cargarTrabajos();
+        }
+
+
+        inicializarPanelBrigada();
+
+
+    </script>
+
+
+</body>
+
+</html>
