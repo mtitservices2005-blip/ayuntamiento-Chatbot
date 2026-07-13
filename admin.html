@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Panel Administrativo | Laguna Salada</title>
+
+    <style>
+
+        /* =====================================================
+           🎨 CONFIGURACIÓN GENERAL
+           ===================================================== */
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f7f6;
+            color: #263238;
+        }
+
+
+        /* =====================================================
+           🏛️ ENCABEZADO
+           ===================================================== */
+
+        .header {
+            background: #075e54;
+            color: white;
+            padding: 18px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 22px;
+        }
+
+        .header p {
+            margin: 5px 0 0;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .admin-badge {
+            background: rgba(255,255,255,0.15);
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+        }
+
+
+        /* =====================================================
+           📦 CONTENEDOR PRINCIPAL
+           ===================================================== */
+
+        .container {
+            max-width: 1250px;
+            margin: auto;
+            padding: 24px;
+        }
+
+
+        /* =====================================================
+           📊 TARJETAS DE ESTADÍSTICAS
+           ===================================================== */
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 14px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.07);
+        }
+
+        .stat-card .number {
+            font-size: 30px;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .stat-card .label {
+            color: #607d8b;
+            font-size: 14px;
+        }
+
+
+        /* =====================================================
+           🔍 BÚSQUEDA Y FILTROS
+           ===================================================== */
+
+        .toolbar {
+            background: white;
+            padding: 16px;
+            border-radius: 14px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.07);
+
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 220px;
+            padding: 11px 14px;
+            border: 1px solid #ddd;
+            border-radius: 9px;
+            font-size: 14px;
+        }
+
+        .filter-btn {
+            border: none;
+            padding: 10px 14px;
+            border-radius: 9px;
+            cursor: pointer;
+            background: #edf2f1;
+            color: #37474f;
+            font-weight: 600;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: #075e54;
+            color: white;
+        }
+
+
+        /* =====================================================
+           🎫 LISTA DE TICKETS
+           ===================================================== */
+
+        .tickets-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .ticket-card {
+            background: white;
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.07);
+        }
+
+        .ticket-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .ticket-number {
+            color: #075e54;
+            font-weight: bold;
+            font-size: 17px;
+        }
+
+        .ticket-category {
+            margin-top: 5px;
+            font-weight: 600;
+        }
+
+
+        /* =====================================================
+           🚦 ESTADOS DEL TICKET
+           ===================================================== */
+
+        .status {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .recibido {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .asignado {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .en-proceso {
+            background: #ffe0b2;
+            color: #e65100;
+        }
+
+        .resuelto {
+            background: #d4edda;
+            color: #155724;
+        }
+
+
+        /* =====================================================
+           📝 INFORMACIÓN DEL TICKET
+           ===================================================== */
+
+        .ticket-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px 20px;
+            margin: 15px 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .ticket-description {
+            background: #f7f9f9;
+            padding: 12px;
+            border-radius: 9px;
+            margin: 12px 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+
+        /* =====================================================
+           🔘 ACCIONES DEL TICKET
+           ===================================================== */
+
+        .ticket-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .action-btn {
+            border: none;
+            border-radius: 8px;
+            padding: 9px 12px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .map-btn {
+            background: #e8f5e9;
+            color: #1b5e20;
+        }
+
+        .photo-btn {
+            background: #e3f2fd;
+            color: #0d47a1;
+        }
+
+        .status-select {
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+        }
+
+
+        /* =====================================================
+           📱 DISEÑO RESPONSIVE
+           ===================================================== */
+
+        @media (max-width: 800px) {
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .ticket-info {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 500px) {
+
+            .container {
+                padding: 14px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+
+            .stat-card {
+                padding: 15px;
+            }
+
+            .stat-card .number {
+                font-size: 24px;
+            }
+
+            .header h1 {
+                font-size: 18px;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <!-- =====================================================
+         🏛️ ENCABEZADO DEL PANEL
+         ===================================================== -->
+
+    <header class="header">
+
+        <div>
+            <h1>🏛️ Panel Administrativo</h1>
+            <p>Ayuntamiento Municipal de Laguna Salada</p>
+        </div>
+
+        <div class="admin-badge">
+            👤 Administrador
+        </div>
+
+    </header>
+
+
+    <!-- =====================================================
+         📦 CONTENIDO PRINCIPAL
+         ===================================================== -->
+
+    <main class="container">
+
+
+        <!-- =================================================
+             📊 RESUMEN DE TICKETS
+             ================================================= -->
+
+        <section class="stats">
+
+            <div class="stat-card">
+                <div class="number" id="totalTickets">4</div>
+                <div class="label">🎫 Total tickets</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="number" id="ticketsRecibidos">1</div>
+                <div class="label">🟡 Recibidos</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="number" id="ticketsProceso">2</div>
+                <div class="label">🟠 En proceso</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="number" id="ticketsResueltos">1</div>
+                <div class="label">🟢 Resueltos</div>
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             🔍 BÚSQUEDA Y FILTROS
+             ================================================= -->
+
+        <section class="toolbar">
+
+            <input
+                type="text"
+                id="searchInput"
+                class="search-input"
+                placeholder="🔍 Buscar ticket, sector o categoría..."
+                oninput="buscarTickets()"
+            >
+
+            <button
+                class="filter-btn active"
+                onclick="filtrarTickets('todos', this)"
+            >
+                Todos
+            </button>
+
+            <button
+                class="filter-btn"
+                onclick="filtrarTickets('recibido', this)"
+            >
+                🟡 Recibidos
+            </button>
+
+            <button
+                class="filter-btn"
+                onclick="filtrarTickets('asignado', this)"
+            >
+                🔵 Asignados
+            </button>
+
+            <button
+                class="filter-btn"
+                onclick="filtrarTickets('en-proceso', this)"
+            >
+                🟠 En proceso
+            </button>
+
+            <button
+                class="filter-btn"
+                onclick="filtrarTickets('resuelto', this)"
+            >
+                🟢 Resueltos
+            </button>
+
+        </section>
+
+
+        <!-- =================================================
+             🎫 CONTENEDOR DE TICKETS
+             ================================================= -->
+
+        <section
+            id="ticketsContainer"
+            class="tickets-grid"
+        >
+        </section>
+
+    </main>
+
+
+    <script>
+
+        // =====================================================
+        // 🎫 DATOS SIMULADOS DE TICKETS
+        // Más adelante estos datos vendrán de una base de datos
+        // real y se actualizarán automáticamente.
+        // =====================================================
+
+        let tickets = [
+
+            {
+                numero: 'LS-2026-0001',
+                categoria: '🗑️ Basura acumulada',
+                sector: 'Las Flores',
+                ubicacion: 'Frente al parque',
+                latitud: 19.650421,
+                longitud: -71.083274,
+                descripcion:
+                    'Hay varias bolsas de basura acumuladas desde hace tres días.',
+                foto: 'images/palacio-municipal.png',
+                estado: 'recibido',
+                fecha: '13/07/2026 9:30 AM'
+            },
+
+            {
+                numero: 'LS-2026-0002',
+                categoria: '💡 Alumbrado público',
+                sector: 'Pueblo Nuevo',
+                ubicacion: 'Calle principal, próximo al colmado',
+                latitud: 19.648900,
+                longitud: -71.081500,
+                descripcion:
+                    'Dos lámparas llevan varios días apagadas.',
+                foto: '',
+                estado: 'asignado',
+                fecha: '13/07/2026 10:15 AM'
+            },
+
+            {
+                numero: 'LS-2026-0003',
+                categoria: '🕳️ Calle deteriorada',
+                sector: 'San Antonio',
+                ubicacion: 'Entrada del sector',
+                latitud: 19.653200,
+                longitud: -71.079800,
+                descripcion:
+                    'Existe un hoyo grande que dificulta el tránsito de vehículos.',
+                foto: '',
+                estado: 'en-proceso',
+                fecha: '13/07/2026 11:45 AM'
+            },
+
+            {
+                numero: 'LS-2026-0004',
+                categoria: '🌳 Árbol caído',
+                sector: 'Puerto Rico',
+                ubicacion: 'Próximo a la cancha',
+                latitud: 19.647700,
+                longitud: -71.085100,
+                descripcion:
+                    'Un árbol cayó parcialmente sobre la vía.',
+                foto: '',
+                estado: 'resuelto',
+                fecha: '13/07/2026 12:20 PM'
+            }
+
+        ];
+
+
+        // =====================================================
+        // 🎨 OBTENER NOMBRE VISIBLE DEL ESTADO
+        // Convierte el valor interno del estado en un texto
+        // amigable para mostrar al administrador.
+        // =====================================================
+
+        function obtenerNombreEstado(estado) {
+
+            const nombres = {
+                'recibido': '🟡 Recibido',
+                'asignado': '🔵 Asignado',
+                'en-proceso': '🟠 En proceso',
+                'resuelto': '🟢 Resuelto'
+            };
+
+            return nombres[estado] || estado;
+        }
+
+
+        // =====================================================
+        // 🎫 MOSTRAR TICKETS
+        // Construye visualmente las tarjetas usando los datos
+        // almacenados en el arreglo tickets.
+        // =====================================================
+
+        function mostrarTickets(lista = tickets) {
+
+            const contenedor =
+                document.getElementById('ticketsContainer');
+
+            contenedor.innerHTML = '';
+
+            lista.forEach(function(ticket) {
+
+                const tarjeta = document.createElement('article');
+
+                tarjeta.classList.add('ticket-card');
+
+                tarjeta.dataset.estado = ticket.estado;
+
+                tarjeta.dataset.busqueda = (
+                    ticket.numero + ' ' +
+                    ticket.categoria + ' ' +
+                    ticket.sector + ' ' +
+                    ticket.ubicacion
+                ).toLowerCase();
+
+
+                tarjeta.innerHTML = `
+
+                    <div class="ticket-header">
+
+                        <div>
+                            <div class="ticket-number">
+                                ${ticket.numero}
+                            </div>
+
+                            <div class="ticket-category">
+                                ${ticket.categoria}
+                            </div>
+                        </div>
+
+                        <span class="status ${ticket.estado}">
+                            ${obtenerNombreEstado(ticket.estado)}
+                        </span>
+
+                    </div>
+
+
+                    <div class="ticket-info">
+
+                        <div>
+                            <strong>📍 Sector:</strong>
+                            ${ticket.sector}
+                        </div>
+
+                        <div>
+                            <strong>🗓️ Fecha:</strong>
+                            ${ticket.fecha}
+                        </div>
+
+                        <div>
+                            <strong>📌 Ubicación:</strong>
+                            ${ticket.ubicacion}
+                        </div>
+
+                        <div>
+                            <strong>🌐 GPS:</strong>
+                            ${ticket.latitud}, ${ticket.longitud}
+                        </div>
+
+                    </div>
+
+
+                    <div class="ticket-description">
+                        <strong>📝 Descripción:</strong><br>
+                        ${ticket.descripcion}
+                    </div>
+
+
+                    <div class="ticket-actions">
+
+                        <button
+                            class="action-btn map-btn"
+                            onclick="verMapa(
+                                ${ticket.latitud},
+                                ${ticket.longitud}
+                            )"
+                        >
+                            🗺️ Ver ubicación
+                        </button>
+
+
+                        ${
+                            ticket.foto
+                            ?
+                            `
+                            <button
+                                class="action-btn photo-btn"
+                                onclick="verFoto('${ticket.foto}')"
+                            >
+                                📸 Ver evidencia
+                            </button>
+                            `
+                            :
+                            ''
+                        }
+
+
+                        <select
+                            class="status-select"
+                            onchange="
+                                cambiarEstado(
+                                    '${ticket.numero}',
+                                    this.value
+                                )
+                            "
+                        >
+                            <option
+                                value="recibido"
+                                ${ticket.estado === 'recibido' ? 'selected' : ''}
+                            >
+                                🟡 Recibido
+                            </option>
+
+                            <option
+                                value="asignado"
+                                ${ticket.estado === 'asignado' ? 'selected' : ''}
+                            >
+                                🔵 Asignado
+                            </option>
+
+                            <option
+                                value="en-proceso"
+                                ${ticket.estado === 'en-proceso' ? 'selected' : ''}
+                            >
+                                🟠 En proceso
+                            </option>
+
+                            <option
+                                value="resuelto"
+                                ${ticket.estado === 'resuelto' ? 'selected' : ''}
+                            >
+                                🟢 Resuelto
+                            </option>
+                        </select>
+
+                    </div>
+                `;
+
+                contenedor.appendChild(tarjeta);
+            });
+        }
+
+
+        // =====================================================
+        // 🚦 CAMBIAR ESTADO DE UN TICKET
+        // Actualiza temporalmente el estado seleccionado.
+        // Más adelante guardará el cambio en la base de datos.
+        // =====================================================
+
+        function cambiarEstado(numeroTicket, nuevoEstado) {
+
+            const ticket = tickets.find(function(item) {
+                return item.numero === numeroTicket;
+            });
+
+            if (!ticket) {
+                return;
+            }
+
+            ticket.estado = nuevoEstado;
+
+            mostrarTickets();
+            actualizarEstadisticas();
+        }
+
+
+        // =====================================================
+        // 📊 ACTUALIZAR ESTADÍSTICAS
+        // Recalcula automáticamente las tarjetas superiores.
+        // =====================================================
+
+        function actualizarEstadisticas() {
+
+            document.getElementById('totalTickets').textContent =
+                tickets.length;
+
+            document.getElementById('ticketsRecibidos').textContent =
+                tickets.filter(function(ticket) {
+                    return ticket.estado === 'recibido';
+                }).length;
+
+            document.getElementById('ticketsProceso').textContent =
+                tickets.filter(function(ticket) {
+                    return (
+                        ticket.estado === 'asignado' ||
+                        ticket.estado === 'en-proceso'
+                    );
+                }).length;
+
+            document.getElementById('ticketsResueltos').textContent =
+                tickets.filter(function(ticket) {
+                    return ticket.estado === 'resuelto';
+                }).length;
+        }
+
+
+        // =====================================================
+        // 🔍 FILTRAR TICKETS POR ESTADO
+        // Permite mostrar todos o únicamente los tickets que
+        // coincidan con el estado seleccionado.
+        // =====================================================
+
+        function filtrarTickets(estado, boton) {
+
+            document
+                .querySelectorAll('.filter-btn')
+                .forEach(function(btn) {
+                    btn.classList.remove('active');
+                });
+
+            boton.classList.add('active');
+
+            if (estado === 'todos') {
+                mostrarTickets(tickets);
+                return;
+            }
+
+            const filtrados = tickets.filter(function(ticket) {
+                return ticket.estado === estado;
+            });
+
+            mostrarTickets(filtrados);
+        }
+
+
+        // =====================================================
+        // 🔎 BUSCAR TICKETS
+        // Busca coincidencias por número, categoría, sector
+        // o ubicación.
+        // =====================================================
+
+        function buscarTickets() {
+
+            const texto = document
+                .getElementById('searchInput')
+                .value
+                .toLowerCase()
+                .trim();
+
+            const resultados = tickets.filter(function(ticket) {
+
+                const contenido = (
+                    ticket.numero + ' ' +
+                    ticket.categoria + ' ' +
+                    ticket.sector + ' ' +
+                    ticket.ubicacion
+                ).toLowerCase();
+
+                return contenido.includes(texto);
+            });
+
+            mostrarTickets(resultados);
+        }
+
+
+        // =====================================================
+        // 🗺️ VER UBICACIÓN EN MAPA
+        // Abre las coordenadas GPS del ticket en Google Maps.
+        // =====================================================
+
+        function verMapa(latitud, longitud) {
+
+            const url =
+                'https://www.google.com/maps?q=' +
+                latitud +
+                ',' +
+                longitud;
+
+            window.open(url, '_blank');
+        }
+
+
+        // =====================================================
+        // 📸 VER EVIDENCIA FOTOGRÁFICA
+        // Abre en una nueva pestaña la fotografía asociada
+        // al reporte ciudadano.
+        // =====================================================
+
+        function verFoto(rutaFoto) {
+            window.open(rutaFoto, '_blank');
+        }
+
+
+        // =====================================================
+        // 🚀 INICIALIZAR PANEL
+        // Muestra los tickets y calcula las estadísticas cuando
+        // se carga por primera vez la página.
+        // =====================================================
+
+        mostrarTickets();
+        actualizarEstadisticas();
+
+    </script>
+
+</body>
+</html>
