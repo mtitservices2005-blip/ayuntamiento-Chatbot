@@ -303,10 +303,17 @@
     let estadoReporte = null;
 let fotoSeleccionada = null;
 
+// =====================================================
+// 🚨 DATOS DEL REPORTE CIUDADANO
+// Almacena temporalmente toda la información recopilada
+// durante la creación de un nuevo reporte.
+// =====================================================
 let datosReporte = {
     categoria: '',
     sector: '',
     ubicacion: '',
+    latitud: null,
+    longitud: null,
     descripcion: '',
     foto: false
 };
@@ -395,6 +402,20 @@ function generarTicket() {
         'Categoría: ' + datosReporte.categoria + '\n' +
         'Sector: ' + datosReporte.sector + '\n' +
         'Ubicación: ' + datosReporte.ubicacion + '\n' +
+        'Categoría: ' + datosReporte.categoria + '\n' +
+'Sector: ' + datosReporte.sector + '\n' +
+'Ubicación: ' + datosReporte.ubicacion + '\n' +
+'Ubicación GPS: ' +
+(
+    datosReporte.latitud !== null &&
+    datosReporte.longitud !== null
+
+        ? datosReporte.latitud.toFixed(6) +
+          ', ' +
+          datosReporte.longitud.toFixed(6)
+
+        : 'No compartida'
+) + '\n' +
         'Descripción: ' + datosReporte.descripcion + '\n' +
         evidencia + '\n' +
         'Estado: Recibido\n\n' +
@@ -486,17 +507,36 @@ function mostrarSectoresReporte() {
                 }, 400);
 
             } else {
-                datosReporte.sector = sector;
-                estadoReporte = 'esperandoUbicacion';
+                // =====================================================
+// 📍 SECTOR SELECCIONADO
+// Guarda el sector y permite al ciudadano elegir entre
+// compartir su GPS o escribir una ubicación manual.
+// =====================================================
 
-                agregarMensaje('📍 ' + sector, 'usuario');
+datosReporte.sector = sector;
 
-                setTimeout(function() {
-                    agregarMensaje(
-                        '📌 Perfecto. Ahora indícame la calle, número, intersección o un punto de referencia donde está ocurriendo el problema.',
-                        'asistente'
-                    );
-                }, 400);
+// Nuevo estado intermedio para seleccionar ubicación.
+estadoReporte = 'seleccionandoUbicacion';
+
+// Muestra el sector seleccionado en el chat.
+agregarMensaje(
+    '📍 ' + sector,
+    'usuario'
+);
+
+// Pregunta cómo desea indicar la ubicación exacta.
+setTimeout(function() {
+
+    agregarMensaje(
+        '📍 ¿Cómo deseas indicar la ubicación exacta del problema?',
+        'asistente'
+    );
+
+    // Muestra los botones GPS y ubicación manual.
+    mostrarOpcionesUbicacion();
+
+}, 400);
+
             }
         });
 
@@ -666,6 +706,208 @@ function mostrarMenuLugares() {
     chatArea.scrollTop = chatArea.scrollHeight;
 }
 
+// =====================================================
+// 📍 OPCIONES DE UBICACIÓN DEL REPORTE
+// Muestra al ciudadano dos formas de indicar dónde
+// está ocurriendo el problema:
+// 1. Compartir su ubicación GPS actual.
+// 2. Escribir manualmente una dirección o referencia.
+// =====================================================
+function mostrarOpcionesUbicacion() {
+
+    const contenedor = document.createElement('div');
+    contenedor.classList.add('selection-options');
+
+    // Botón para compartir la ubicación GPS actual.
+    const botonGPS = document.createElement('button');
+    botonGPS.textContent = '📍 Compartir ubicación actual';
+
+    // Botón para escribir una dirección manualmente.
+    const botonEscribir = document.createElement('button');
+    botonEscribir.textContent = '✍🏼 Escribir dirección o referencia';
+
+
+    // -------------------------------------------------
+    // OPCIÓN 1: COMPARTIR UBICACIÓN GPS
+    // -------------------------------------------------
+    botonGPS.addEventListener('click', function() {
+
+        // Elimina las opciones una vez seleccionada una.
+        contenedor.remove();
+
+        // Inicia la solicitud de ubicación GPS.
+        obtenerUbicacionGPS();
+    });
+
+
+    // -------------------------------------------------
+    // OPCIÓN 2: ESCRIBIR UBICACIÓN MANUALMENTE
+    // -------------------------------------------------
+    botonEscribir.addEventListener('click', function() {
+
+        // Elimina las opciones una vez seleccionada una.
+        contenedor.remove();
+
+        // Cambia el estado del reporte para esperar texto.
+        estadoReporte = 'esperandoUbicacion';
+
+        // Muestra la elección del ciudadano en el chat.
+        agregarMensaje(
+            '✍🏼 Escribir dirección o referencia',
+            'usuario'
+        );
+
+        // Solicita la ubicación escrita.
+        setTimeout(function() {
+
+            agregarMensaje(
+                '📌 Escribe la calle, número, intersección o un punto de referencia donde está ocurriendo el problema.',
+                'asistente'
+            );
+
+        }, 300);
+    });
+
+
+    // Añade ambos botones al contenedor.
+    contenedor.appendChild(botonGPS);
+    contenedor.appendChild(botonEscribir);
+
+    // Muestra las opciones dentro del chat.
+    chatArea.appendChild(contenedor);
+
+    // Desplaza automáticamente hacia el contenido nuevo.
+    chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+// =====================================================
+// 📡 OBTENER UBICACIÓN GPS
+// Solicita permiso al ciudadano para acceder a la
+// geolocalización del dispositivo.
+//
+// Si tiene éxito:
+// - Guarda latitud y longitud.
+// - Solicita una referencia escrita opcional.
+//
+// Si falla:
+// - Explica el problema.
+// - Permite continuar escribiendo la ubicación.
+// =====================================================
+function obtenerUbicacionGPS() {
+
+    // Muestra en el chat la opción seleccionada.
+    agregarMensaje(
+        '📍 Compartir ubicación actual',
+        'usuario'
+    );
+
+
+    // -------------------------------------------------
+    // VERIFICAR COMPATIBILIDAD DEL NAVEGADOR
+    // -------------------------------------------------
+    if (!navigator.geolocation) {
+
+        agregarMensaje(
+            '⚠️ Tu dispositivo o navegador no permite obtener la ubicación.\n\n' +
+            'Puedes continuar escribiendo una dirección o punto de referencia.',
+            'asistente'
+        );
+
+        estadoReporte = 'esperandoUbicacion';
+
+        return;
+    }
+
+
+    // Informa al ciudadano que se está solicitando el GPS.
+    agregarMensaje(
+        '📡 Obteniendo tu ubicación. Autoriza el acceso si tu navegador lo solicita...',
+        'asistente'
+    );
+
+
+    // -------------------------------------------------
+    // SOLICITAR UBICACIÓN AL DISPOSITIVO
+    // -------------------------------------------------
+    navigator.geolocation.getCurrentPosition(
+
+        // =============================================
+        // UBICACIÓN OBTENIDA CORRECTAMENTE
+        // =============================================
+        function(position) {
+
+            // Guarda las coordenadas obtenidas.
+            datosReporte.latitud = position.coords.latitude;
+            datosReporte.longitud = position.coords.longitude;
+
+            // Cambia al estado que espera una referencia opcional.
+            estadoReporte = 'esperandoReferenciaOpcional';
+
+            agregarMensaje(
+                '✅ Ubicación GPS registrada correctamente.\n\n' +
+                '📌 Ahora puedes escribir una calle o punto de referencia para ayudar al personal del Ayuntamiento a encontrar el lugar con mayor facilidad.\n\n' +
+                'Si no deseas agregar una referencia, escribe: continuar',
+                'asistente'
+            );
+        },
+
+
+        // =============================================
+        // ERROR AL OBTENER LA UBICACIÓN
+        // =============================================
+        function(error) {
+
+            let mensajeError =
+                '⚠️ No fue posible obtener tu ubicación. ';
+
+            // El usuario rechazó el permiso.
+            if (error.code === 1) {
+
+                mensajeError +=
+                    'El permiso de ubicación fue rechazado.';
+
+            // El dispositivo no pudo determinar la posición.
+            } else if (error.code === 2) {
+
+                mensajeError +=
+                    'Tu ubicación no está disponible en este momento.';
+
+            // La solicitud superó el tiempo máximo.
+            } else if (error.code === 3) {
+
+                mensajeError +=
+                    'La solicitud de ubicación tardó demasiado.';
+            }
+
+            mensajeError +=
+                '\n\n📌 Puedes continuar escribiendo manualmente la dirección o un punto de referencia.';
+
+            agregarMensaje(
+                mensajeError,
+                'asistente'
+            );
+
+            // Permite continuar mediante ubicación escrita.
+            estadoReporte = 'esperandoUbicacion';
+        },
+
+
+        // =============================================
+        // CONFIGURACIÓN DE GEOLOCALIZACIÓN
+        // =============================================
+        {
+            // Solicita la mayor precisión disponible.
+            enableHighAccuracy: true,
+
+            // Tiempo máximo de espera: 10 segundos.
+            timeout: 10000,
+
+            // No utiliza una ubicación antigua almacenada.
+            maximumAge: 0
+        }
+    );
+}
+
 
     function enviarMensaje() {
     const texto = input.value.trim();
@@ -728,6 +970,31 @@ function mostrarMenuLugares() {
 
             respuesta =
                 '📝 Perfecto. Describe brevemente qué está ocurriendo y cualquier detalle que pueda ayudar al Ayuntamiento a atender el caso.';
+
+// =====================================================
+// 📌 REFERENCIA OPCIONAL DESPUÉS DEL GPS
+// Si el ciudadano ya compartió sus coordenadas, puede
+// añadir una referencia adicional o escribir "continuar"
+// para pasar directamente a la descripción.
+// =====================================================
+} else if (estadoReporte === 'esperandoReferenciaOpcional') {
+
+    // Si escribe "continuar", no añade referencia.
+    if (texto.toLowerCase() === 'continuar') {
+
+        datosReporte.ubicacion = 'Sin referencia adicional';
+
+    } else {
+
+        // Guarda la referencia escrita por el ciudadano.
+        datosReporte.ubicacion = texto;
+    }
+
+    // Continúa con la descripción del problema.
+    estadoReporte = 'esperandoDescripcion';
+
+    respuesta =
+        '📝 Perfecto. Describe brevemente qué está ocurriendo y cualquier detalle que pueda ayudar al Ayuntamiento a atender el caso.';
 
         // PASO 3: Esperando descripción
 } else if (estadoReporte === 'esperandoDescripcion') {
