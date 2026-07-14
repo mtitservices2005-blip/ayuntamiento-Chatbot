@@ -1,0 +1,10 @@
+{
+  "id": "authentication",
+  "name": "Authentication",
+  "surface": "frontend",
+  "route": "/authentication",
+  "owner": "Chatbot Municipal V2",
+  "status": "foundation",
+  "dynamicEntry": "../modules/authentication/index.js",
+  "permissions": []
+}

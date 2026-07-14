@@ -1,0 +1,14 @@
+{
+  "version": "2.0.0-foundation",
+  "modules": [
+    { "id": "citizen-portal", "name": "Citizen Portal", "surface": "frontend", "route": "/citizen" },
+    { "id": "municipal-panel", "name": "Municipal Panel", "surface": "frontend", "route": "/municipal" },
+    { "id": "brigade-portal", "name": "Brigade Portal", "surface": "frontend", "route": "/brigade" },
+    { "id": "master-admin", "name": "Master Admin", "surface": "frontend", "route": "/master" },
+    { "id": "configuration", "name": "Configuration", "surface": "shared", "route": "/configuration" },
+    { "id": "authentication", "name": "Authentication", "surface": "shared", "route": "/auth" },
+    { "id": "notifications", "name": "Notifications", "surface": "shared", "route": "/notifications" },
+    { "id": "audit", "name": "Audit", "surface": "shared", "route": "/audit" },
+    { "id": "storage", "name": "Storage", "surface": "shared", "route": "/storage" }
+  ]
+}

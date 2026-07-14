@@ -1,0 +1,10 @@
+{
+  "id": "citizen-portal",
+  "name": "Citizen Portal",
+  "surface": "frontend",
+  "route": "/citizen-portal",
+  "owner": "Chatbot Municipal V2",
+  "status": "foundation",
+  "dynamicEntry": "../modules/citizen-portal/index.js",
+  "permissions": []
+}

@@ -1,0 +1,10 @@
+{
+  "id": "master-admin",
+  "name": "Master Admin",
+  "surface": "frontend",
+  "route": "/master-admin",
+  "owner": "Chatbot Municipal V2",
+  "status": "foundation",
+  "dynamicEntry": "../modules/master-admin/index.js",
+  "permissions": []
+}

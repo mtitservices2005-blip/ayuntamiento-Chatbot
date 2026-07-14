@@ -1,0 +1,10 @@
+{
+  "id": "storage",
+  "name": "Storage",
+  "surface": "frontend",
+  "route": "/storage",
+  "owner": "Chatbot Municipal V2",
+  "status": "foundation",
+  "dynamicEntry": "../modules/storage/index.js",
+  "permissions": []
+}

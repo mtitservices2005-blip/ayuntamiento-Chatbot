@@ -1,0 +1,10 @@
+{
+  "id": "notifications",
+  "name": "Notifications",
+  "surface": "frontend",
+  "route": "/notifications",
+  "owner": "Chatbot Municipal V2",
+  "status": "foundation",
+  "dynamicEntry": "../modules/notifications/index.js",
+  "permissions": []
+}
