@@ -1,0 +1,10 @@
+{
+  "id": "configuration",
+  "name": "Configuration",
+  "surface": "frontend",
+  "route": "/configuration",
+  "owner": "Chatbot Municipal V2",
+  "status": "foundation",
+  "dynamicEntry": "../modules/configuration/index.js",
+  "permissions": []
+}

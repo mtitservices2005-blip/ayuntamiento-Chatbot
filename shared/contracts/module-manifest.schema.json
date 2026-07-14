@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Chatbot Municipal V2 Module Manifest",
+  "type": "object",
+  "required": ["id", "name", "surface", "route", "owner", "status"],
+  "properties": {
+    "id": { "type": "string" },
+    "name": { "type": "string" },
+    "surface": { "enum": ["frontend", "backend", "shared"] },
+    "route": { "type": "string" },
+    "owner": { "type": "string" },
+    "status": { "enum": ["foundation", "planned", "active", "deprecated"] },
+    "dynamicEntry": { "type": "string" },
+    "permissions": { "type": "array", "items": { "type": "string" } }
+  }
+}

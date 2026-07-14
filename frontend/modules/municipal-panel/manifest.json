@@ -1,0 +1,10 @@
+{
+  "id": "municipal-panel",
+  "name": "Municipal Panel",
+  "surface": "frontend",
+  "route": "/municipal-panel",
+  "owner": "Chatbot Municipal V2",
+  "status": "foundation",
+  "dynamicEntry": "../modules/municipal-panel/index.js",
+  "permissions": []
+}
