@@ -1,0 +1,9 @@
+:root { color-scheme: light; font-family: system-ui, sans-serif; background: #f4f7f8; color: #17212b; }
+body { margin: 0; }
+main { width: min(960px, calc(100% - 2rem)); margin: 2rem auto; }
+header, section { background: #fff; border-radius: .75rem; padding: 1.25rem; margin-bottom: 1rem; box-shadow: 0 1px 3px #0002; }
+h1 { margin-top: 0; } form { display: grid; gap: .75rem; } label { display: grid; gap: .3rem; font-weight: 650; }
+input, select, textarea, button { font: inherit; padding: .65rem; border-radius: .4rem; border: 1px solid #aab7c2; }
+button { background: #075f46; color: #fff; border: 0; cursor: pointer; font-weight: 650; } button:disabled { opacity: .6; cursor: wait; }
+.message { padding: .75rem; border-radius: .4rem; }.message-error { background:#ffebee; color:#a31221; }.message-success { background:#e7f7ed; color:#075b2c; }.message-info { background:#e8f1ff; color:#103b76; }
+.ticket-list { display:grid; gap:.6rem; }.ticket { border:1px solid #d6dfe5; border-radius:.5rem; padding:.75rem; }.muted { color:#55636e; }.hidden { display:none; }
