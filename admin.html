@@ -329,11 +329,155 @@
     font-weight: 700;
 }
 
+/* =====================================================
+   📊 REPORTES POR CATEGORÍA
+   ===================================================== */
+
+.reporte-categorias {
+    background: white;
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.reporte-categorias-header {
+    margin-bottom: 22px;
+}
+
+.reporte-categorias-header h2 {
+    margin: 0 0 6px 0;
+    color: #075e54;
+    font-size: 21px;
+}
+
+.reporte-categorias-header p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.lista-categorias {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.categoria-item {
+    width: 100%;
+}
+
+.categoria-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 7px;
+}
+
+.categoria-nombre {
+    color: #333;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.categoria-cantidad {
+    color: #075e54;
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.categoria-barra-fondo {
+    width: 100%;
+    height: 10px;
+    background: #e9ecef;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.categoria-barra {
+    height: 100%;
+    background: #128c7e;
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+
+.sin-datos-categorias {
+    padding: 20px;
+    text-align: center;
+    color: #777;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+/* =====================================================
+   📅 FILTROS DE PERÍODO DEL DASHBOARD
+   ===================================================== */
+
+.filtros-periodo-dashboard {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+
+.filtro-periodo {
+    border: 1px solid #d8e2e0;
+    background: white;
+    color: #555;
+    padding: 9px 16px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.filtro-periodo:hover {
+    transform: translateY(-1px);
+    border-color: #128c7e;
+    color: #075e54;
+}
+
+.filtro-periodo.activo {
+    background: #075e54;
+    color: white;
+    border-color: #075e54;
+}
+
         @media (max-width: 800px) {
 
             .stats {
                 grid-template-columns: repeat(2, 1fr);
             }
+
+            .reporte-categorias {
+    padding: 18px;
+}
+    .filtros-periodo-dashboard {
+    gap: 8px;
+}
+
+.filtro-periodo {
+    flex: 1 1 calc(50% - 8px);
+    text-align: center;
+    padding: 9px 10px;
+}
+
+
+.reporte-categorias-header h2 {
+    font-size: 18px;
+}
+
+.categoria-info {
+    align-items: flex-start;
+}
 
             .ticket-info {
                 grid-template-columns: 1fr;
@@ -424,6 +568,38 @@
      📊 RESUMEN DE GESTIÓN MUNICIPAL
      ===================================================== -->
 
+     <!-- =====================================================
+ 📅 FILTROS DE PERÍODO DEL DASHBOARD
+ ===================================================== -->
+
+<div class="filtros-periodo-dashboard">
+
+    <button
+        class="filtro-periodo activo"
+        onclick="filtrarDashboardPorPeriodo('todos', this)">
+        Todos
+    </button>
+
+    <button
+        class="filtro-periodo"
+        onclick="filtrarDashboardPorPeriodo('hoy', this)">
+        Hoy
+    </button>
+
+    <button
+        class="filtro-periodo"
+        onclick="filtrarDashboardPorPeriodo('semana', this)">
+        Esta semana
+    </button>
+
+    <button
+        class="filtro-periodo"
+        onclick="filtrarDashboardPorPeriodo('mes', this)">
+        Este mes
+    </button>
+
+</div>
+
 <div class="dashboard-resumen">
 
     <div class="stat-card">
@@ -437,6 +613,39 @@
         <div class="stat-label">Recibidos</div>
         <div class="stat-number" id="statRecibidos">0</div>
     </div>
+
+        <div class="stat-card">
+    <div class="stat-icon">🔵</div>
+    <div class="stat-label">Asignados</div>
+    <div class="stat-number" id="statAsignados">0</div>
+</div>
+
+    <!-- =====================================================
+ 📊 REPORTES POR CATEGORÍA
+ ===================================================== -->
+
+<div class="reporte-categorias">
+
+    <div class="reporte-categorias-header">
+        <div>
+            <h2>📊 Reportes por categoría</h2>
+            <p>
+                Distribución de los tickets recibidos según
+                el tipo de incidencia reportada.
+            </p>
+        </div>
+    </div>
+
+    <div id="listaCategorias" class="lista-categorias">
+
+        <div class="sin-datos-categorias">
+            Cargando datos de categorías...
+        </div>
+
+    </div>
+
+</div>
+
 
     <div class="stat-card">
         <div class="stat-icon">🟠</div>
@@ -670,6 +879,8 @@ console.log('📊 Cantidad de tickets:', data ? data.length : 0);
 
 actualizarResumenDashboard(data || []);
 
+actualizarReporteCategorias(data || []);
+
 tickets = data || [];
 
 
@@ -678,7 +889,7 @@ tickets = data || [];
         // -------------------------------------------------
 
         mostrarTickets();
-        actualizarEstadisticas();
+        
 
 
         console.log(
@@ -754,12 +965,13 @@ function actualizarResumenDashboard(tickets) {
         return ticket.estado === 'recibido';
     }).length;
 
-    const enProceso = tickets.filter(function(ticket) {
-        return (
-            ticket.estado === 'asignado' ||
-            ticket.estado === 'en-proceso'
-        );
-    }).length;
+    const asignados = tickets.filter(function(ticket) {
+    return ticket.estado === 'asignado';
+}).length;
+
+const enProceso = tickets.filter(function(ticket) {
+    return ticket.estado === 'en-proceso';
+}).length;
 
     const porVerificar = tickets.filter(function(ticket) {
         return ticket.estado === 'pendiente-verificacion';
@@ -780,6 +992,9 @@ function actualizarResumenDashboard(tickets) {
     document.getElementById('statRecibidos').textContent =
         recibidos;
 
+        document.getElementById('statAsignados').textContent =
+    asignados;
+
     document.getElementById('statProceso').textContent =
         enProceso;
 
@@ -792,6 +1007,246 @@ function actualizarResumenDashboard(tickets) {
     document.getElementById('statTasaResolucion').textContent =
         tasaResolucion + '%';
 }
+
+// =====================================================
+// 📊 ACTUALIZAR REPORTE POR CATEGORÍAS
+// Agrupa los tickets según su categoría y genera
+// automáticamente las barras del dashboard.
+// =====================================================
+
+// =====================================================
+// 📊 ACTUALIZAR REPORTE POR CATEGORÍAS
+// =====================================================
+
+// =====================================================
+// 📊 ACTUALIZAR REPORTE POR CATEGORÍAS
+// Agrupa los tickets según su categoría y genera
+// automáticamente las barras del dashboard.
+// =====================================================
+
+function actualizarReporteCategorias(tickets) {
+
+    const contenedor =
+        document.getElementById('listaCategorias');
+
+    if (!contenedor) {
+        return;
+    }
+
+    // Si no hay tickets, mostrar mensaje.
+    if (!tickets || tickets.length === 0) {
+
+        contenedor.innerHTML = `
+            <div class="sin-datos-categorias">
+                No hay tickets disponibles para mostrar.
+            </div>
+        `;
+
+        return;
+    }
+
+    // Contar tickets por categoría.
+    const conteoCategorias = {};
+
+    tickets.forEach(function(ticket) {
+
+        const categoria =
+            ticket.categoria || 'Sin categoría';
+
+        if (!conteoCategorias[categoria]) {
+            conteoCategorias[categoria] = 0;
+        }
+
+        conteoCategorias[categoria]++;
+    });
+
+    // Ordenar categorías de mayor a menor.
+    const categoriasOrdenadas =
+        Object.entries(conteoCategorias)
+            .sort(function(a, b) {
+                return b[1] - a[1];
+            });
+
+    // Obtener la cantidad máxima para calcular
+    // proporcionalmente el ancho de las barras.
+    const cantidadMaxima =
+        Math.max(
+            ...categoriasOrdenadas.map(function(item) {
+                return item[1];
+            })
+        );
+
+    // Generar las categorías visualmente.
+    contenedor.innerHTML =
+        categoriasOrdenadas.map(function(item) {
+
+            const categoria = item[0];
+            const cantidad = item[1];
+
+            const porcentaje =
+                cantidadMaxima > 0
+                    ? (cantidad / cantidadMaxima) * 100
+                    : 0;
+
+            return `
+                <div class="categoria-item">
+
+                    <div class="categoria-info">
+
+                        <span class="categoria-nombre">
+                            ${categoria}
+                        </span>
+
+                        <span class="categoria-cantidad">
+                            ${cantidad}
+                            ${cantidad === 1 ? 'ticket' : 'tickets'}
+                        </span>
+
+                    </div>
+
+                    <div class="categoria-barra-fondo">
+
+                        <div
+                            class="categoria-barra"
+                            style="width: ${porcentaje}%;">
+                        </div>
+
+                    </div>
+
+                </div>
+            `;
+
+        }).join('');
+}
+
+
+// =====================================================
+// 📅 FILTRAR DASHBOARD POR PERÍODO
+// Actualiza las estadísticas y categorías usando
+// únicamente los tickets del período seleccionado.
+// =====================================================
+
+function filtrarDashboardPorPeriodo(periodo, boton) {
+
+    console.log('📅 Filtro ejecutado:', periodo);
+
+    const ahora = new Date();
+
+    let ticketsFiltrados = tickets;
+
+
+    // -------------------------------------------------
+    // HOY
+    // Desde las 00:00 del día actual.
+    // -------------------------------------------------
+
+    if (periodo === 'hoy') {
+
+        const inicioHoy = new Date(
+            ahora.getFullYear(),
+            ahora.getMonth(),
+            ahora.getDate()
+        );
+
+        ticketsFiltrados = tickets.filter(function(ticket) {
+
+            if (!ticket.creado_en) {
+                return false;
+            }
+
+            const fechaTicket = new Date(ticket.creado_en);
+
+            return fechaTicket >= inicioHoy;
+        });
+    }
+
+
+    // -------------------------------------------------
+    // ESTA SEMANA
+    // Desde el lunes de la semana actual.
+    // -------------------------------------------------
+
+    else if (periodo === 'semana') {
+
+        const inicioSemana = new Date(ahora);
+
+        const diaSemana = ahora.getDay();
+
+        const diasDesdeLunes =
+            diaSemana === 0
+                ? 6
+                : diaSemana - 1;
+
+        inicioSemana.setDate(
+            ahora.getDate() - diasDesdeLunes
+        );
+
+        inicioSemana.setHours(0, 0, 0, 0);
+
+        ticketsFiltrados = tickets.filter(function(ticket) {
+
+            if (!ticket.creado_en) {
+                return false;
+            }
+
+            const fechaTicket = new Date(ticket.creado_en);
+
+            return fechaTicket >= inicioSemana;
+        });
+    }
+
+
+    // -------------------------------------------------
+    // ESTE MES
+    // Desde el primer día del mes actual.
+    // -------------------------------------------------
+
+    else if (periodo === 'mes') {
+
+        const inicioMes = new Date(
+            ahora.getFullYear(),
+            ahora.getMonth(),
+            1
+        );
+
+        ticketsFiltrados = tickets.filter(function(ticket) {
+
+            if (!ticket.creado_en) {
+                return false;
+            }
+
+            const fechaTicket = new Date(ticket.creado_en);
+
+            return fechaTicket >= inicioMes;
+        });
+    }
+
+
+    // -------------------------------------------------
+    // ACTUALIZAR DASHBOARD Y CATEGORÍAS
+    // -------------------------------------------------
+
+    actualizarResumenDashboard(ticketsFiltrados);
+
+    actualizarReporteCategorias(ticketsFiltrados);
+
+
+    // -------------------------------------------------
+    // CAMBIAR EL BOTÓN ACTIVO
+    // -------------------------------------------------
+
+    document
+        .querySelectorAll('.filtro-periodo')
+        .forEach(function(elemento) {
+            elemento.classList.remove('activo');
+        });
+
+    if (boton) {
+        boton.classList.add('activo');
+    }
+}
+
+
 
         // =====================================================
         // 🎫 MOSTRAR TICKETS
