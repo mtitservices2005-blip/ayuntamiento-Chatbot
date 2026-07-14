@@ -728,8 +728,23 @@ async function consultarTicketEnSupabase(numeroTicket) {
 }
 
 async function generarTicket() {
+const ahora = new Date();
+
+const año = String(ahora.getFullYear()).slice(-2);
+
+const mes = String(
+    ahora.getMonth() + 1
+).padStart(2, '0');
+
+const dia = String(
+    ahora.getDate()
+).padStart(2, '0');
+
+const aleatorio =
+    Math.floor(1000 + Math.random() * 9000);
+
 const numeroTicket =
-    'LS-2026-' + Math.floor(1000 + Math.random() * 9000);
+    `LS-${año}${mes}${dia}-${aleatorio}`;
 
 
 // =====================================================
@@ -907,6 +922,81 @@ setTimeout(function() {
     chatArea.appendChild(contenedor);
     chatArea.scrollTop = chatArea.scrollHeight;
 }
+
+// =====================================================
+// 🏢 MENÚ DE SERVICIOS MUNICIPALES
+// Muestra al ciudadano las principales áreas de servicio
+// disponibles en esta versión del asistente.
+// =====================================================
+
+function mostrarMenuServiciosMunicipales() {
+
+    const contenedor = document.createElement('div');
+
+    contenedor.classList.add('selection-options');
+
+
+    const servicios = [
+
+        {
+            texto: '🗑️ Recogida de residuos',
+            pregunta: 'Información sobre recogida de residuos'
+        },
+
+        {
+            texto: '💡 Alumbrado público',
+            pregunta: 'Información sobre alumbrado público'
+        },
+
+        {
+            texto: '🛣️ Calles y espacios públicos',
+            pregunta: 'Información sobre calles y espacios públicos'
+        },
+
+        {
+            texto: '🌳 Parques y áreas verdes',
+            pregunta: 'Información sobre parques y áreas verdes'
+        },
+
+        {
+            texto: '🪦 Cementerio municipal',
+            pregunta: 'Información sobre cementerio municipal'
+        },
+
+        {
+            texto: '📄 Otros servicios y trámites',
+            pregunta: 'Información sobre otros servicios y trámites'
+        }
+
+    ];
+
+
+    servicios.forEach(function(servicio) {
+
+        const boton = document.createElement('button');
+
+        boton.textContent = servicio.texto;
+
+
+        boton.addEventListener('click', function() {
+
+            contenedor.remove();
+
+            preguntaRapida(servicio.pregunta);
+
+        });
+
+
+        contenedor.appendChild(boton);
+
+    });
+
+
+    chatArea.appendChild(contenedor);
+
+    chatArea.scrollTop = chatArea.scrollHeight;
+}
+
 function mostrarMenuLagunaSalada() {
     const contenedor = document.createElement('div');
     contenedor.classList.add('selection-options');
@@ -1396,6 +1486,130 @@ if (estadoReporte === 'esperandoNumeroTicket') {
 
             esperandoSector = false;
 
+            // =====================================================
+// 🏢 SERVICIOS MUNICIPALES
+// Muestra las principales áreas de servicio disponibles.
+// =====================================================
+
+} else if (
+    pregunta.includes('servicios municipales') ||
+    pregunta.includes('consultar los servicios')
+) {
+
+    respuesta =
+        '🏢 SERVICIOS MUNICIPALES\n\n' +
+        'Consulta información sobre las principales áreas de servicio del Ayuntamiento Municipal de Laguna Salada.\n\n' +
+        'Selecciona el servicio que deseas consultar:';
+
+    setTimeout(function() {
+        mostrarMenuServiciosMunicipales();
+    }, 300);
+
+    // =====================================================
+// 🗑️ INFORMACIÓN SOBRE RECOGIDA DE RESIDUOS
+// =====================================================
+
+} else if (
+    pregunta.includes('información sobre recogida de residuos') ||
+    pregunta.includes('informacion sobre recogida de residuos')
+) {
+
+    respuesta =
+        '🗑️ RECOGIDA DE RESIDUOS\n\n' +
+        'El Ayuntamiento Municipal de Laguna Salada ofrece el servicio de recogida de residuos sólidos para contribuir a la limpieza y salubridad de la comunidad.\n\n' +
+        '🚨 Si deseas reportar basura acumulada o una situación relacionada con la recogida de residuos, puedes utilizar la opción "Reportar un problema" del menú principal.';
+
+
+// =====================================================
+// 💡 INFORMACIÓN SOBRE ALUMBRADO PÚBLICO
+// =====================================================
+
+} else if (
+    pregunta.includes('información sobre alumbrado público') ||
+    pregunta.includes('informacion sobre alumbrado publico')
+) {
+
+    respuesta =
+        '💡 ALUMBRADO PÚBLICO\n\n' +
+        'Puedes informar al Ayuntamiento sobre luminarias dañadas u otras incidencias relacionadas con el alumbrado público.\n\n' +
+        '🚨 Para registrar una incidencia y recibir un número de seguimiento, utiliza la opción "Reportar un problema" del menú principal.';
+
+
+// =====================================================
+// 🛣️ INFORMACIÓN SOBRE CALLES Y ESPACIOS PÚBLICOS
+// =====================================================
+
+} else if (
+    pregunta.includes('información sobre calles y espacios públicos') ||
+    pregunta.includes('informacion sobre calles y espacios publicos')
+) {
+
+    respuesta =
+        '🛣️ CALLES Y ESPACIOS PÚBLICOS\n\n' +
+        'El asistente permite comunicar incidencias relacionadas con calles deterioradas, obstrucciones de vías y otras situaciones que afecten los espacios públicos del municipio.\n\n' +
+        '🚨 Puedes registrar el caso mediante la opción "Reportar un problema" y recibir un número de ticket para consultar su estado.';
+
+
+// =====================================================
+// 🌳 INFORMACIÓN SOBRE PARQUES Y ÁREAS VERDES
+// =====================================================
+
+} else if (
+    pregunta.includes('información sobre parques y áreas verdes') ||
+    pregunta.includes('informacion sobre parques y areas verdes')
+) {
+
+    respuesta =
+        '🌳 PARQUES Y ÁREAS VERDES\n\n' +
+        'Puedes comunicar al Ayuntamiento situaciones relacionadas con árboles caídos y otras incidencias que afecten parques, áreas verdes o espacios de uso comunitario.\n\n' +
+        '🚨 Para dar seguimiento al caso, utiliza la opción "Reportar un problema".';
+
+
+// =====================================================
+// 🪦 INFORMACIÓN SOBRE CEMENTERIO MUNICIPAL
+// =====================================================
+
+} else if (
+    pregunta.includes('información sobre cementerio municipal') ||
+    pregunta.includes('informacion sobre cementerio municipal')
+) {
+
+    respuesta =
+        '🪦 CEMENTERIO MUNICIPAL\n\n' +
+        'El Cementerio Municipal forma parte de los espacios gestionados en el ámbito local.\n\n' +
+        'Para información específica sobre servicios, disponibilidad, requisitos o procedimientos, puedes comunicarte directamente con el Ayuntamiento mediante la opción "Contacto".';
+
+
+// =====================================================
+// 📄 OTROS SERVICIOS Y TRÁMITES
+// =====================================================
+
+} else if (
+    pregunta.includes('información sobre otros servicios y trámites') ||
+    pregunta.includes('informacion sobre otros servicios y tramites')
+) {
+
+    respuesta =
+        '📄 OTROS SERVICIOS Y TRÁMITES\n\n' +
+        'Esta sección se ampliará progresivamente con información verificada sobre trámites, requisitos, departamentos, horarios y servicios ofrecidos por el Ayuntamiento Municipal de Laguna Salada.\n\n' +
+        '📞 Para una consulta específica, puedes utilizar la opción "Contacto" del menú principal.';
+
+        // =====================================================
+// 📰 NOTICIAS Y EVENTOS MUNICIPALES
+// =====================================================
+
+} else if (
+    pregunta.includes('noticias y eventos') ||
+    pregunta.includes('ver noticias') ||
+    pregunta.includes('eventos municipales')
+) {
+
+    respuesta =
+        '📰 NOTICIAS Y EVENTOS\n\n' +
+        'Consulta avisos, actividades, operativos y eventos de interés para la comunidad de Laguna Salada.\n\n' +
+        '📢 Próximamente esta sección mostrará publicaciones oficiales actualizadas directamente por el Ayuntamiento.\n\n' +
+        '🏛️ En esta versión inicial, la información será incorporada progresivamente con contenido oficial verificado.';
+
         } else if (
     pregunta.includes('conocer laguna salada') ||
     pregunta.includes('conoce laguna salada')
@@ -1495,16 +1709,7 @@ setTimeout(function() {
         '📞 También puedes utilizar la opción Contacto del menú principal para consultar los medios disponibles de comunicación con el Ayuntamiento.';
 
 
-    respuesta =
-        '🏛️ CONOCE LAGUNA SALADA\n\n' +
-        'Descubre la historia, los lugares emblemáticos, la población, la economía y los sectores de nuestro municipio.\n\n' +
-        '¿Qué deseas conocer?';
-
-    setTimeout(function() {
-        mostrarMenuLagunaSalada();
-    }, 300);
-
-        // INFORMACIÓN DEL AYUNTAMIENTO
+            // INFORMACIÓN DEL AYUNTAMIENTO
         } else if (
             pregunta.includes('información del ayuntamiento') ||
             pregunta.includes('informacion del ayuntamiento') ||

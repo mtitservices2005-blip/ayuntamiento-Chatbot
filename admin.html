@@ -451,6 +451,83 @@
     border-color: #075e54;
 }
 
+/* =====================================================
+   📈 TICKETS RECIBIDOS VS RESUELTOS
+   ===================================================== */
+
+.reporte-recibidos-resueltos {
+    background: white;
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.reporte-comparacion-header {
+    margin-bottom: 22px;
+}
+
+.reporte-comparacion-header h2 {
+    margin: 0 0 6px 0;
+    color: #075e54;
+    font-size: 21px;
+}
+
+.reporte-comparacion-header p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.comparacion-tickets {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.comparacion-item {
+    width: 100%;
+}
+
+.comparacion-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.comparacion-info strong {
+    color: #075e54;
+    font-size: 16px;
+}
+
+.comparacion-barra-fondo {
+    width: 100%;
+    height: 14px;
+    background: #e9ecef;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.comparacion-barra {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+
+.recibidos-barra {
+    background: #f4b400;
+}
+
+.resueltos-barra {
+    background: #28a745;
+}
+
+
         @media (max-width: 800px) {
 
             .stats {
@@ -494,6 +571,15 @@
 .stat-number {
     font-size: 24px;
 }
+
+.reporte-recibidos-resueltos {
+    padding: 18px;
+}
+
+.reporte-comparacion-header h2 {
+    font-size: 18px;
+}
+
         }
 
         @media (max-width: 500px) {
@@ -624,27 +710,7 @@
  📊 REPORTES POR CATEGORÍA
  ===================================================== -->
 
-<div class="reporte-categorias">
 
-    <div class="reporte-categorias-header">
-        <div>
-            <h2>📊 Reportes por categoría</h2>
-            <p>
-                Distribución de los tickets recibidos según
-                el tipo de incidencia reportada.
-            </p>
-        </div>
-    </div>
-
-    <div id="listaCategorias" class="lista-categorias">
-
-        <div class="sin-datos-categorias">
-            Cargando datos de categorías...
-        </div>
-
-    </div>
-
-</div>
 
 
     <div class="stat-card">
@@ -669,6 +735,68 @@
         <div class="stat-icon">📈</div>
         <div class="stat-label">Tasa de resolución</div>
         <div class="stat-number" id="statTasaResolucion">0%</div>
+    </div>
+
+</div>
+
+<!-- =====================================================
+ 📈 TICKETS RECIBIDOS VS RESUELTOS
+ ===================================================== -->
+
+<div class="reporte-recibidos-resueltos">
+
+    <div class="reporte-comparacion-header">
+        <h2>📈 Tickets recibidos vs. resueltos</h2>
+
+        <p>
+            Comparación de los reportes recibidos y los tickets
+            resueltos durante el período seleccionado.
+        </p>
+    </div>
+
+    <div class="comparacion-tickets">
+
+        <div class="comparacion-item">
+
+            <div class="comparacion-info">
+                <span>🎫 Tickets recibidos</span>
+
+                <strong id="comparacionRecibidos">
+                    0
+                </strong>
+            </div>
+
+            <div class="comparacion-barra-fondo">
+                <div
+                    id="barraRecibidos"
+                    class="comparacion-barra recibidos-barra"
+                    style="width: 0%;">
+                </div>
+            </div>
+
+        </div>
+
+
+        <div class="comparacion-item">
+
+            <div class="comparacion-info">
+                <span>🟢 Tickets resueltos</span>
+
+                <strong id="comparacionResueltos">
+                    0
+                </strong>
+            </div>
+
+            <div class="comparacion-barra-fondo">
+                <div
+                    id="barraResueltos"
+                    class="comparacion-barra resueltos-barra"
+                    style="width: 0%;">
+                </div>
+            </div>
+
+        </div>
+
     </div>
 
 </div>
@@ -880,6 +1008,8 @@ console.log('📊 Cantidad de tickets:', data ? data.length : 0);
 actualizarResumenDashboard(data || []);
 
 actualizarReporteCategorias(data || []);
+
+actualizarComparacionTickets(data || []);
 
 tickets = data || [];
 
@@ -1119,6 +1249,80 @@ function actualizarReporteCategorias(tickets) {
         }).join('');
 }
 
+// =====================================================
+// 📈 ACTUALIZAR RECIBIDOS VS RESUELTOS
+// Compara todos los tickets recibidos durante el período
+// con aquellos que actualmente están resueltos.
+// =====================================================
+
+function actualizarComparacionTickets(tickets) {
+
+    const totalRecibidos = tickets.length;
+
+    const totalResueltos = tickets.filter(function(ticket) {
+        return ticket.estado === 'resuelto';
+    }).length;
+
+
+    // ---------------------------------------------
+    // OBTENER ELEMENTOS DEL HTML
+    // ---------------------------------------------
+
+    const elementoRecibidos =
+        document.getElementById('comparacionRecibidos');
+
+    const elementoResueltos =
+        document.getElementById('comparacionResueltos');
+
+    const barraRecibidos =
+        document.getElementById('barraRecibidos');
+
+    const barraResueltos =
+        document.getElementById('barraResueltos');
+
+
+    // ---------------------------------------------
+    // SEGURIDAD: VERIFICAR QUE EXISTAN
+    // ---------------------------------------------
+
+    if (
+        !elementoRecibidos ||
+        !elementoResueltos ||
+        !barraRecibidos ||
+        !barraResueltos
+    ) {
+        return;
+    }
+
+
+    // ---------------------------------------------
+    // ACTUALIZAR NÚMEROS
+    // ---------------------------------------------
+
+    elementoRecibidos.textContent = totalRecibidos;
+
+    elementoResueltos.textContent = totalResueltos;
+
+
+    // ---------------------------------------------
+    // CALCULAR ANCHO DE LAS BARRAS
+    // Recibidos siempre representa el 100%.
+    // Resueltos representa su proporción del total.
+    // ---------------------------------------------
+
+    const porcentajeResueltos =
+        totalRecibidos > 0
+            ? (totalResueltos / totalRecibidos) * 100
+            : 0;
+
+
+    barraRecibidos.style.width =
+        totalRecibidos > 0 ? '100%' : '0%';
+
+    barraResueltos.style.width =
+        porcentajeResueltos + '%';
+}
+
 
 // =====================================================
 // 📅 FILTRAR DASHBOARD POR PERÍODO
@@ -1229,6 +1433,8 @@ function filtrarDashboardPorPeriodo(periodo, boton) {
     actualizarResumenDashboard(ticketsFiltrados);
 
     actualizarReporteCategorias(ticketsFiltrados);
+    actualizarComparacionTickets(ticketsFiltrados);
+    
 
 
     // -------------------------------------------------
