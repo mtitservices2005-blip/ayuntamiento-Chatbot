@@ -47,7 +47,10 @@ language sql security definer set search_path = public as $$
   select t.public_id, t.category, t.status, t.created_at, t.updated_at
   from public.v11_tickets t
   where t.public_id = ticket_public_id
-    and t.tracking_secret_hash = crypt(provided_secret, t.tracking_secret_hash);
+    and t.tracking_secret_hash = extensions.crypt(
+    provided_secret,
+    t.tracking_secret_hash
+)
 $$;
 
 create or replace function public.v11_assign_ticket(target_ticket uuid, target_brigade uuid, expected_version integer)
