@@ -1,0 +1,19 @@
+name: Verify V1.1 contracts
+
+on:
+  pull_request:
+    branches: [saibot/v1.1]
+  push:
+    branches: [saibot/v1.1]
+
+permissions:
+  contents: read
+
+jobs:
+  static-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run static V1.1 contract
+        shell: pwsh
+        run: ./tests/static_v11_contract.ps1
