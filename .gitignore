@@ -2,3 +2,5 @@ v1.1/js/config.local.js
 .env
 .env.*
 !.env.example
+.saibot-dev-validation-state.json
+supabase/.temp/
