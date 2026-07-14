@@ -1,10 +1,13 @@
 {
   "id": "citizen-portal",
-  "name": "Citizen Portal",
+  "name": "Citizen Portal V2",
   "surface": "frontend",
   "route": "/citizen-portal",
   "owner": "Chatbot Municipal V2",
-  "status": "foundation",
+  "status": "visual-ready",
   "dynamicEntry": "../modules/citizen-portal/index.js",
-  "permissions": []
+  "permissions": [
+    "anonymous:create-report-demo",
+    "anonymous:track-ticket-demo"
+  ]
 }
