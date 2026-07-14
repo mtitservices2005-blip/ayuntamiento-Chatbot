@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Demo Auth CM-002</title>
+  <link rel="stylesheet" href="./login.css">
+  <script type="module">
+    import { detectRole } from '../../shared/auth/session.js';
+    import { redirectByRole, protectRoute } from '../../shared/auth/guards.js';
+    import { getRoleLabel } from '../../shared/auth/roles.js';
+
+    const output = () => document.getElementById('demo-output');
+    const fakeSession = (role) => ({ user: { app_metadata: { role }, email: `${role}@demo.local` } });
+    const write = (message) => { output().textContent = message; };
+
+    window.runAuthDemo = async (state) => {
+      if (state === 'loading') {
+        write('Estado carga: validando credenciales...');
+        return;
+      }
+      if (state === 'error') {
+        write('Error demo: credenciales inválidas o usuario sin acceso municipal.');
+        return;
+      }
+      const role = document.getElementById('demo-role').value;
+      const session = fakeSession(role);
+      const detectedRole = detectRole(session);
+      const target = redirectByRole(detectedRole, { simulate: true });
+      write(`Login exitoso\nRol detectado: ${detectedRole}\nDestino visual: ${getRoleLabel(detectedRole)}\nRedirección simulada: ${target}`);
+    };
+
+    window.runGuardDemo = async () => {
+      const result = await protectRoute({
+        allowedRoles: ['mt_superadmin', 'municipal_admin'],
+        location: { assign: (path) => write(`Guard redirigiría a: ${path}`) },
+      }).catch((error) => ({ allowed: false, reason: error.message }));
+      write(`Guard demo sin Supabase real: ${JSON.stringify(result, null, 2)}`);
+    };
+  </script>
+</head>
+<body class="auth-page">
+  <main class="auth-shell">
+    <section class="auth-hero" aria-label="Demo visual">
+      <div class="auth-brand">
+        <img class="auth-logo" src="../../images/logo.png" alt="Logo institucional">
+        <div>
+          <h1>Demo CM-002</h1>
+          <p>Estados visuales de autenticación</p>
+        </div>
+      </div>
+      <div class="auth-hero-copy">
+        <h2>Prueba el flujo sin usuarios reales.</h2>
+        <p>Esta pantalla documenta éxito, error, carga, roles y redirección simulada para QA visual.</p>
+      </div>
+    </section>
+
+    <section class="auth-panel">
+      <article class="auth-card">
+        <header>
+          <span class="auth-eyebrow">Modo demo</span>
+          <h2>Estados de autenticación</h2>
+          <p>Selecciona un rol o dispara estados visuales controlados.</p>
+        </header>
+
+        <label class="auth-field" for="demo-role">
+          Rol
+          <select id="demo-role">
+            <option value="mt_superadmin">mt_superadmin</option>
+            <option value="municipal_admin">municipal_admin</option>
+            <option value="supervisor">supervisor</option>
+            <option value="brigade_member">brigade_member</option>
+          </select>
+        </label>
+
+        <div class="demo-controls">
+          <button type="button" onclick="runAuthDemo('success')">Login exitoso</button>
+          <button type="button" onclick="runAuthDemo('error')">Error credenciales</button>
+          <button type="button" onclick="runAuthDemo('loading')">Carga</button>
+          <button type="button" onclick="runGuardDemo()">Probar guard</button>
+        </div>
+
+        <div id="demo-output" class="auth-message demo-output" role="status" aria-live="polite">Esperando prueba visual...</div>
+        <p class="auth-demo-note">Demo claramente identificado: no persiste sesión ni requiere Supabase.</p>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

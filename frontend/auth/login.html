@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Iniciar sesión | Saibot Municipal</title>
+  <link rel="stylesheet" href="./login.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script>
+    // Configuración pública esperada en producción:
+    // window.SAIBOT_SUPABASE_URL = 'https://PROJECT.supabase.co';
+    // window.SAIBOT_SUPABASE_ANON_KEY = 'SUPABASE_ANON_PUBLIC_KEY';
+    // Nunca colocar service_role ni secretos en frontend.
+  </script>
+  <script type="module" src="./login.js"></script>
+</head>
+<body class="auth-page">
+  <main class="auth-shell">
+    <section class="auth-hero" aria-label="Identidad institucional">
+      <div class="auth-brand">
+        <img class="auth-logo" src="../../images/logo.png" alt="Logo institucional">
+        <div>
+          <h1>Saibot Municipal</h1>
+          <p>Autenticación V2 · CM-002</p>
+        </div>
+      </div>
+      <div class="auth-hero-copy">
+        <h2>Acceso seguro para la operación municipal.</h2>
+        <p>Un primer flujo visual para validar roles, sesión y redirección sin afectar la experiencia V1 existente.</p>
+      </div>
+    </section>
+
+    <section class="auth-panel" aria-label="Formulario de inicio de sesión">
+      <form id="auth-login-form" class="auth-card">
+        <header>
+          <span class="auth-eyebrow">Portal V2</span>
+          <h2>Iniciar sesión</h2>
+          <p>Ingresa tus credenciales institucionales.</p>
+        </header>
+
+        <label class="auth-field" for="auth-email">
+          Email
+          <input id="auth-email" type="email" name="email" autocomplete="email" placeholder="usuario@municipio.gob" required>
+        </label>
+
+        <label class="auth-field" for="auth-password">
+          Contraseña
+          <span class="password-row">
+            <input id="auth-password" type="password" name="password" autocomplete="current-password" placeholder="••••••••" required>
+            <button id="auth-password-toggle" class="password-toggle" type="button" aria-pressed="false">Mostrar</button>
+          </span>
+        </label>
+
+        <div class="auth-actions">
+          <a class="auth-link" href="mailto:soporte@mtitservices.com?subject=Recuperar%20contraseña%20Saibot">Recuperar contraseña</a>
+        </div>
+
+        <label class="auth-demo-note">
+          <input id="auth-demo-mode" type="checkbox" checked>
+          Modo demo visual activo. Contraseña demo: <strong>demo1234</strong>.
+        </label>
+
+        <button id="auth-submit" class="auth-button" type="submit">Iniciar sesión</button>
+        <div id="auth-message" class="auth-message" role="status" aria-live="polite"></div>
+      </form>
+    </section>
+  </main>
+</body>
+</html>
