@@ -43,6 +43,33 @@
             font-size: 14px;
             opacity: 0.9;
         }
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-logo {
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.header-text {
+    min-width: 0;
+}
+
+.header-text h2 {
+    margin: 0 0 5px;
+    font-size: 20px;
+}
+
+.header-text p {
+    margin: 0;
+    font-size: 14px;
+    opacity: 0.9;
+}
 
          .chat-area {
     flex: 1;
@@ -240,9 +267,23 @@
     <div class="chatbot">
 
         <div class="header">
-            <h2>🏛️ Ayuntamiento de Laguna Salada</h2>
+
+    <div class="header-content">
+
+        <img
+            src="images/logo.png"
+            alt="Logo Ayuntamiento de Laguna Salada"
+            class="header-logo"
+        >
+
+        <div class="header-text">
+            <h2>Ayuntamiento de Laguna Salada</h2>
             <p>Asistente Virtual Municipal • En línea</p>
         </div>
+
+    </div>
+
+</div>
 
         <div class="chat-area">
 
@@ -1797,9 +1838,9 @@ setTimeout(function() {
     estadoReporte = 'esperandoNumeroTicket';
 
     respuesta =
-        '🎫 CONSULTAR MI TICKET\n\n' +
-        'Escribe el número de tu reporte para consultar su estado actual.\n\n' +
-        'Ejemplo: LS-2026-4827';
+    '🎫 CONSULTAR MI TICKET\n\n' +
+    'Escribe el número de tu reporte para consultar su estado actual.\n\n' +
+    'Ejemplo: LS-260714-4827';
 
         // INICIAR REPORTE
         } else if (

@@ -279,6 +279,31 @@
             }
         }
 
+        .header-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-logo {
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.header-text {
+    min-width: 0;
+}
+
+.header-text h1 {
+    margin: 0 0 5px;
+}
+
+.header-text p {
+    margin: 0;
+}
+
     </style>
 
 </head>
@@ -293,13 +318,22 @@
 
     <header class="header">
 
-        <h1>👷 Panel de Brigada</h1>
+    <div class="header-content">
 
-        <p>
-            Ayuntamiento Municipal de Laguna Salada
-        </p>
+        <img
+            src="images/logo.png"
+            alt="Logo Ayuntamiento de Laguna Salada"
+            class="header-logo"
+        >
 
-    </header>
+        <div class="header-text">
+            <h1>Panel de Brigada</h1>
+            <p>Ayuntamiento Municipal de Laguna Salada</p>
+        </div>
+
+    </div>
+
+</header>
 
 
     <!-- =====================================================
@@ -492,6 +526,15 @@
 
 
             trabajos.forEach(function(ticket) {
+                const nombresEstados = {
+    'asignado': '🔵 Asignado',
+    'en-proceso': '🟠 En proceso',
+    'pendiente-verificacion': '🟣 Pendiente de verificación',
+    'resuelto': '🟢 Resuelto'
+};
+
+const estadoVisible =
+    nombresEstados[ticket.estado] || ticket.estado;
 
                 const tarjeta =
                     document.createElement('article');
@@ -513,7 +556,7 @@
                     </div>
 
                     <span class="estado">
-                        🔵 ${ticket.estado}
+                        ${estadoVisible}
                     </span>
 
 
@@ -575,17 +618,27 @@ ${
 
 <div class="acciones">
 
-                        <button
-                            class="btn mapa-btn"
-                            onclick="
-                                verMapa(
-                                    ${ticket.latitud},
-                                    ${ticket.longitud}
-                                )
-                            "
-                        >
-                            🗺️ Ver ubicación
-                        </button>
+                        ${
+    ticket.latitud !== null &&
+    ticket.longitud !== null
+    ?
+    `
+        <button
+            class="btn mapa-btn"
+            onclick="
+                verMapa(
+                    ${ticket.latitud},
+                    ${ticket.longitud}
+                )
+            "
+        >
+            🗺️ Ver ubicación GPS
+        </button>
+    `
+    :
+    ''
+}
+
 
 
                         ${
