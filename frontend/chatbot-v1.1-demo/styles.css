@@ -96,52 +96,73 @@ body {
   border: 0;
 }
 
-.municipal-summary {
-  padding: 12px 14px 14px;
-  background: #f8fffc;
-  border-bottom: 1px solid rgba(7, 94, 84, 0.16);
+.municipal-statistics {
+  padding: 8px 12px;
+  background: #f7fbf9;
+  border-bottom: 1px solid rgba(7, 94, 84, 0.12);
 }
-.municipal-summary h2 {
-  margin: 0 0 10px;
+.municipal-statistics-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  border: 1px solid rgba(7, 94, 84, 0.22);
+  border-radius: 999px;
+  padding: 6px 12px;
   color: var(--wa-green);
-  font-size: 16px;
+  background: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,.08);
 }
-.municipal-summary dl {
+.municipal-statistics-panel {
+  overflow: hidden;
+  margin-top: 8px;
+  max-height: 220px;
+  opacity: 1;
+  transform: translateY(0);
+  transition: max-height 160ms ease, opacity 140ms ease, transform 140ms ease, margin-top 160ms ease;
+}
+.municipal-statistics-panel[hidden] {
+  display: block;
+  max-height: 0;
+  margin-top: 0;
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
+}
+.municipal-statistics dl {
   display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   margin: 0;
 }
-.municipal-summary dl > div {
-  display: grid;
-  gap: 2px;
-  padding: 9px 10px;
+.municipal-statistics dl > div {
+  min-width: 0;
+  padding: 8px;
   background: #fff;
-  border: 1px solid rgba(7, 94, 84, 0.14);
+  border: 1px solid rgba(7, 94, 84, 0.12);
   border-radius: 12px;
 }
-.municipal-summary dt {
+.municipal-statistics dt {
   color: #49645f;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-.municipal-summary dd {
-  margin: 0;
-  color: var(--text);
-  font-size: 14px;
-  font-weight: 700;
-}
-.municipal-summary .summary-meta {
-  color: #62756f;
   font-size: 11px;
-  font-weight: 400;
-  line-height: 1.3;
+  font-weight: 700;
 }
+.municipal-statistics dd {
+  margin: 3px 0 0;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
 
 .quick-replies button:focus-visible,
 .composer button:focus-visible,
-.composer input:focus-visible {
+.composer input:focus-visible,
+.municipal-statistics-toggle:focus-visible {
   outline: 3px solid #ffcf33;
   outline-offset: 2px;
 }
@@ -152,6 +173,9 @@ body {
     grid-template-columns: 1fr;
     gap: 10px;
     width: 100%;
+  }
+  .municipal-statistics dl {
+    grid-template-columns: 1fr;
   }
   .quick-replies button {
     width: 100%;

@@ -4,7 +4,9 @@ import { createCitizenTicket, getPublicInstitutionConfig } from '../../shared/ap
 import { getSupabaseClient } from '../../shared/supabase/client.js';
 
 const chat = document.querySelector('#chat');
-const municipalSummary = document.querySelector('#municipal-summary');
+const municipalStatistics = document.querySelector('#municipal-statistics');
+const municipalStatisticsToggle = document.querySelector('#municipal-statistics-toggle');
+const municipalStatisticsPanel = document.querySelector('#municipal-statistics-panel');
 const input = document.querySelector('#message-input');
 const send = document.querySelector('#send-button');
 const evidenceInput = document.querySelector('#evidence-input');
@@ -13,7 +15,7 @@ const content = municipalConfig.institutionalContent;
 
 const isPublished = (item) => item?.status === contentStatuses.PUBLISHED;
 const pendingText = (label) => `[PENDIENTE: ${label} oficial validado por el Ayuntamiento]`;
-const PENDING_VALIDATION = 'Pendiente de validación oficial';
+const PENDING_VALIDATION = 'Pendiente';
 const quickSectorOptions = [...municipalConfig.sectors, 'Otro sector'];
 
 const legacyCategoryLabel = (category) => typeof category === 'string' ? category : category.label;
@@ -23,11 +25,7 @@ function isSummaryValidated(item) {
   return isPublished(item) && item?.summaryValidated === true;
 }
 
-function formatSourceYear(item) {
-  return [item?.year, item?.source].filter(Boolean).join(' · ');
-}
-
-export function buildMunicipalSummary(profile = municipalConfig) {
+export function buildMunicipalStatistics(profile = municipalConfig) {
   const institutionalContent = profile.institutionalContent || {};
   const population = institutionalContent.population;
   const territorialArea = institutionalContent.territorialArea;
@@ -37,33 +35,27 @@ export function buildMunicipalSummary(profile = municipalConfig) {
     : PENDING_VALIDATION;
 
   return {
-    title: `${profile.municipality?.shortName || 'Municipio'} en cifras`,
     items: [
       {
         label: 'Población',
         value: isSummaryValidated(population) && population.total ? population.total : PENDING_VALIDATION,
-        meta: isSummaryValidated(population) ? formatSourceYear(population) : '',
       },
       {
-        label: 'Área territorial',
+        label: 'Área km²',
         value: isSummaryValidated(territorialArea) && territorialArea.valueKm2 ? `${territorialArea.valueKm2} km²` : PENDING_VALIDATION,
-        meta: isSummaryValidated(territorialArea) ? formatSourceYear(territorialArea) : '',
       },
       {
         label: 'Economía',
         value: economyActivities,
-        meta: isSummaryValidated(economy) && economy.source ? economy.source : '',
       },
     ],
   };
 }
 
-function renderMunicipalSummary(profile = municipalConfig) {
-  if (!municipalSummary) return;
-  const summary = buildMunicipalSummary(profile);
-  municipalSummary.replaceChildren();
-  const title = document.createElement('h2');
-  title.textContent = summary.title;
+function renderMunicipalStatistics(profile = municipalConfig) {
+  if (!municipalStatisticsPanel) return;
+  const summary = buildMunicipalStatistics(profile);
+  municipalStatisticsPanel.replaceChildren();
   const list = document.createElement('dl');
   summary.items.forEach((item) => {
     const group = document.createElement('div');
@@ -72,15 +64,24 @@ function renderMunicipalSummary(profile = municipalConfig) {
     term.textContent = item.label;
     value.textContent = item.value;
     group.append(term, value);
-    if (item.meta) {
-      const meta = document.createElement('dd');
-      meta.className = 'summary-meta';
-      meta.textContent = item.meta;
-      group.append(meta);
-    }
     list.append(group);
   });
-  municipalSummary.append(title, list);
+  municipalStatisticsPanel.append(list);
+}
+
+function setMunicipalStatisticsOpen(isOpen) {
+  if (!municipalStatistics || !municipalStatisticsToggle || !municipalStatisticsPanel) return;
+  municipalStatistics.classList.toggle('is-open', isOpen);
+  municipalStatisticsToggle.setAttribute('aria-expanded', String(isOpen));
+  municipalStatisticsPanel.hidden = !isOpen;
+}
+
+function closeMunicipalStatistics() {
+  setMunicipalStatisticsOpen(false);
+}
+
+function toggleMunicipalStatistics() {
+  setMunicipalStatisticsOpen(!municipalStatistics?.classList.contains('is-open'));
 }
 
 function newReportDraft() {
@@ -102,7 +103,8 @@ function newReportDraft() {
 document.querySelector('#municipal-logo').src = municipalConfig.branding.logoUrl;
 document.querySelector('#municipal-name').textContent = municipalConfig.municipality.name;
 document.documentElement.style.setProperty('--wa-green', municipalConfig.branding.primaryColor);
-renderMunicipalSummary(municipalConfig);
+renderMunicipalStatistics(municipalConfig);
+closeMunicipalStatistics();
 
 initializeIntegration();
 defaultWelcome();
@@ -205,6 +207,7 @@ function card({ title, image, body, list }) {
 }
 
 function handlePayload(payload, label) {
+  closeMunicipalStatistics();
   user(label);
   if (payload === conversationIntents.MAIN_MENU) { initializeIntegration(); return defaultWelcome(); }
   if (payload === conversationIntents.KNOW_MUNICIPALITY) return knowMunicipalityMenu();
@@ -372,6 +375,7 @@ function handleText() {
   const text = input.value.trim();
   if (!text) return;
   input.value = '';
+  closeMunicipalStatistics();
   user(text);
   if (state.mode === 'report-other-sector') { return selectSector(text); }
   if (state.mode === 'report-manual-location') { state.report.locationText = text; state.report.locationSource = 'manual-address'; return askDescription(); }
@@ -393,6 +397,7 @@ function handleEvidenceSelection(event) {
   showReportSummary();
 }
 
+municipalStatisticsToggle?.addEventListener('click', toggleMunicipalStatistics);
 send.addEventListener('click', handleText);
 input.addEventListener('keydown', (event) => { if (event.key === 'Enter') handleText(); });
 evidenceInput.addEventListener('change', handleEvidenceSelection);
