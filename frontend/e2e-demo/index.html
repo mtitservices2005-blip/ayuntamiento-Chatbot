@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CM-012 Demo E2E V2</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="demo-shell" data-demo-app>
+    <section class="hero">
+      <p class="eyebrow">CM-012 · Demo end-to-end controlada</p>
+      <h1>Chatbot Municipal V2: del reporte ciudadano a resolución supervisada</h1>
+      <p>Recorrido visual para alcalde, funcionarios, supervisores, brigada, ciudadanía y cliente potencial. No ejecuta escrituras remotas ni presenta datos demo como integración real.</p>
+      <div class="hero-grid">
+        <div><span>Institución</span><strong data-institution>Ayuntamiento Piloto Saibot</strong></div>
+        <div><span>Actor actual</span><strong data-current-actor>Ciudadano</strong></div>
+        <div><span>Estado ticket</span><strong data-current-status>received</strong></div>
+        <div><span>Integración</span><strong data-current-integration>REAL NOT VERIFIED</strong></div>
+      </div>
+    </section>
+
+    <section class="controls" aria-label="Controles de demo">
+      <button type="button" data-action="prev">Paso anterior</button>
+      <button type="button" data-action="next" class="primary">Siguiente paso</button>
+      <button type="button" data-action="reject">Demostrar devolución</button>
+      <button type="button" data-action="reset">Reiniciar</button>
+    </section>
+
+    <section class="status-panel">
+      <article>
+        <p class="eyebrow">Próxima acción</p>
+        <h2 data-next-action>Crear reporte ciudadano</h2>
+        <p data-step-description></p>
+      </article>
+      <aside>
+        <p class="eyebrow">Folio y secreto</p>
+        <strong data-folio>Se genera por v11_create_citizen_ticket</strong>
+        <span data-secret>tracking_secret soportado por contrato; no se muestra en demo pública.</span>
+      </aside>
+    </section>
+
+    <section class="timeline" data-timeline aria-label="Timeline del flujo E2E"></section>
+
+    <section class="detail-grid">
+      <article class="card">
+        <h2>Pantalla para presentación</h2>
+        <dl>
+          <div><dt>Módulo ciudadano</dt><dd data-citizen-state>Formulario y tracking preparados con RPC confirmadas.</dd></div>
+          <div><dt>Ayuntamiento</dt><dd data-municipal-state>Listado, detalle y asignación mediante contrato v11_assign_ticket.</dd></div>
+          <div><dt>Brigada</dt><dd data-brigade-state>Inicio y envío a verificación mediante RPC confirmadas.</dd></div>
+          <div><dt>Supervisor</dt><dd data-supervisor-state>Aprueba o devuelve usando v11_review_ticket_resolution.</dd></div>
+        </dl>
+      </article>
+      <article class="card warning">
+        <h2>Separación REAL/DEMO</h2>
+        <ul>
+          <li>Sin Supabase público autorizado detectado localmente: los pasos reales quedan REAL_NOT_RUN.</li>
+          <li>Evidencia ciudadana: BLOCKED hasta Edge Function o contrato seguro de carga.</li>
+          <li>Evidencia de resolución: contrato cliente autenticado confirmado, pero bucket real es prerrequisito manual.</li>
+          <li>No se usan service_role, db push, buckets remotos, notificaciones reales ni costos.</li>
+        </ul>
+      </article>
+    </section>
+  </main>
+  <script type="module" src="./index.js"></script>
+</body>
+</html>

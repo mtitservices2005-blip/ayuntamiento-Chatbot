@@ -1,0 +1,32 @@
+# CM-012 E2E Matrix — Integración final V2
+
+Fecha: 2026-07-15. Validación estática/local basada exclusivamente en contratos CM-011 y migraciones V1.1. No se detectó ni usó instancia Supabase autorizada durante esta misión; por tanto no hay pasos `REAL_VERIFIED` contra remoto.
+
+Estados permitidos: `REAL_VERIFIED`, `REAL_NOT_RUN`, `PARTIAL`, `DEMO_ONLY`, `BLOCKED`.
+
+| step_id | Actor | Acción | Módulo frontend | Contrato backend | Estado | Prueba realizada | Resultado | Bloqueo | Acción humana necesaria |
+|---|---|---|---|---|---:|---|---|---|---|
+| E2E-01 | Ciudadano | Crear reporte | `frontend/modules/citizen-portal/` | RPC `v11_create_citizen_ticket(target_institution, ticket_category, ticket_description, ticket_sector, ticket_location_text, ticket_latitude, ticket_longitude, ticket_evidence_path)` | REAL_NOT_RUN | Inspección SQL/API y demo local | Contrato confirmado; devuelve `public_id` y `tracking_secret`; no probado en Supabase real | Falta URL/key pública autorizada e institución piloto real | Autorizar proyecto Supabase, variables públicas e institución piloto |
+| E2E-02 | Ciudadano | Adjuntar evidencia inicial | Citizen Portal / Storage | `ticket-evidence-v11`, path `institution_id/pending/...` aceptado por RPC | BLOCKED | Inspección CM-011 gaps y storage policies | No existe upload directo ciudadano seguro ni Edge Function versionada | Falta mecanismo server-side para validar MIME/tamaño/costo y escribir Storage | Diseñar/desplegar Edge Function o contrato equivalente aprobado |
+| E2E-03 | Ciudadano | Recibir folio y secreto | Citizen Portal | Resultado `public_id`, `tracking_secret` de `v11_create_citizen_ticket` | REAL_NOT_RUN | Inspección RPC | Soportado por contrato | Sin instancia real autorizada para ejecutar | Ejecutar prueba con ambiente piloto aprobado |
+| E2E-04 | Ayuntamiento | Listar tickets | `frontend/modules/municipal-panel/` | Tabla `v11_tickets` bajo RLS y membership activo | REAL_NOT_RUN | Inspección API `listInstitutionTickets` y RLS documentada | Preparado para roles autenticados | Sin usuario de prueba/membership real | Crear usuarios/memberships piloto autorizados |
+| E2E-05 | Ayuntamiento | Ver detalle de ticket | Municipal Panel | `v11_tickets` campos confirmados | REAL_NOT_RUN | Inspección estática | Campos principales confirmados | Sin sesión real autorizada | Probar con municipal_admin/supervisor piloto |
+| E2E-06 | Ayuntamiento | Asignar brigada | Municipal Panel | RPC `v11_assign_ticket(target_ticket, target_brigade, expected_version)` | REAL_NOT_RUN | Inspección SQL/API; demo E2E local | Transición `received -> assigned` confirmada con versionado | Sin ticket/brigada/usuario real | Crear brigada piloto y ejecutar prueba no destructiva |
+| E2E-07 | Brigada | Consultar tickets asignados | `frontend/modules/brigade-portal/` | `v11_tickets`, `v11_brigade_members`, RLS | PARTIAL | Inspección API `listBrigadeTickets` | Lectura preparada; API filtra por `assigned_brigade_id` | No hay RPC dedicada para resolver brigada activa; sin sesión real | Añadir contrato/RPC opcional para contexto de brigada o validar query bajo RLS |
+| E2E-08 | Brigada | Iniciar trabajo | Brigade Portal | RPC `v11_start_ticket_work(target_ticket, expected_version)` | REAL_NOT_RUN | Inspección SQL/API | Transición `assigned -> in_progress` confirmada | Sin usuario brigada real | Ejecutar con usuario miembro de brigada piloto |
+| E2E-09 | Brigada | Subir evidencia de resolución | Brigade Portal / Storage | Bucket `resolution-evidence-v11`, policy `v11_resolution_evidence_brigade_upload`, path `institution_id/ticket_id/resolution/filename` | PARTIAL | Inspección storage policy | Contrato autenticado existe si bucket fue creado manualmente | Buckets no creados por migración; no se verificó remoto | Crear bucket privado en ambiente aprobado y probar upload seguro |
+| E2E-10 | Brigada | Enviar a verificación | Brigade Portal | RPC `v11_submit_ticket_resolution(target_ticket, expected_version, evidence_path, resolution_note)` | REAL_NOT_RUN | Inspección SQL/API | Transición `in_progress -> pending_verification` confirmada y exige path válido | Sin ticket real y evidencia real | Ejecutar tras prueba de bucket/evidencia |
+| E2E-11 | Supervisor | Revisar pendiente | Municipal Panel / Supervisor | `v11_tickets` status `pending_verification`, lectura evidencia | REAL_NOT_RUN | Inspección contratos | Preparado bajo RLS | Sin supervisor real | Crear membership supervisor piloto |
+| E2E-12 | Supervisor | Devolver a brigada | Municipal Panel / Supervisor | RPC `v11_review_ticket_resolution(... approve=false, review_note)` | REAL_NOT_RUN | Inspección SQL/API y demo local | Flujo confirmado `pending_verification -> in_progress`; nota obligatoria | Sin instancia real | Ejecutar prueba controlada |
+| E2E-13 | Brigada | Reenviar corrección | Brigade Portal | RPC `v11_submit_ticket_resolution` | REAL_NOT_RUN | Demo local de rechazo/reenvío | Contrato permite reenviar desde `in_progress` | Sin entorno real | Probar tras devolución real |
+| E2E-14 | Supervisor | Aprobar resolución | Municipal Panel / Supervisor | RPC `v11_review_ticket_resolution(... approve=true)` | REAL_NOT_RUN | Inspección SQL/API | Transición `pending_verification -> resolved` confirmada | Sin entorno real | Ejecutar prueba con supervisor/admin autorizado |
+| E2E-15 | Ciudadano | Consultar estado final | Citizen Portal | RPC `v11_get_citizen_ticket(ticket_public_id, provided_secret)` | REAL_NOT_RUN | Inspección SQL/API | Devuelve solo si `public_id` y secreto coinciden; no filtra existencia por credenciales inválidas | Sin ticket real | Ejecutar tracking contra ticket piloto resuelto |
+| E2E-16 | Presentación | Recorrer flujo visual completo | `frontend/e2e-demo/` | Demo local basada en contratos anteriores | DEMO_ONLY | Demo local estática | Permite mostrar flujo principal y devolución sin backend | No es persistencia real | Usar para venta/demo; no usar como evidencia de producción |
+
+## Resumen por estado
+
+- `REAL_VERIFIED`: ninguno contra Supabase remoto, porque no había configuración pública autorizada.
+- `REAL_NOT_RUN`: creación, tracking y transiciones principales están confirmadas por contrato pero no ejecutadas remotamente.
+- `PARTIAL`: consulta de brigada y evidencia de resolución dependen de contexto/bucket real.
+- `DEMO_ONLY`: demo E2E unificada local.
+- `BLOCKED`: evidencia ciudadana hasta contrato server-side seguro.
