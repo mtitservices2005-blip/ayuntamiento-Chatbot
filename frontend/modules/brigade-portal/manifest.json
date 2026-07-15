@@ -1,10 +1,11 @@
 {
   "id": "brigade-portal",
-  "name": "Brigade Portal",
+  "name": "Portal de Brigadas V2",
   "surface": "frontend",
   "route": "/brigade-portal",
   "owner": "Chatbot Municipal V2",
-  "status": "foundation",
+  "status": "demo-v2",
   "dynamicEntry": "../modules/brigade-portal/index.js",
-  "permissions": []
+  "permissions": [],
+  "demo": "./demo.html"
 }
