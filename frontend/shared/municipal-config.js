@@ -23,6 +23,29 @@ export const municipalConfig = {
       body: 'Laguna Salada es uno de los tres municipios de la provincia Valverde, ubicado en la región Cibao Noroeste de la República Dominicana.\n\nFue constituido como municipio mediante la Ley 916, promulgada el 12 de agosto de 1978.\n\nLimita al norte con la provincia Puerto Plata, al sur con Santa Cruz de Mao, al este con Esperanza y al oeste con la provincia Monte Cristi.\n\nSu desarrollo ha estado estrechamente relacionado con la agricultura, el comercio y el crecimiento de sus comunidades.',
       source: 'Contenido recuperado desde V1 local del proyecto.',
     },
+    population: {
+      status: contentStatuses.PUBLISHED,
+      title: 'Población',
+      total: '10,627 habitantes',
+      urbanRural: 'Información pendiente de validación oficial',
+      growth: 'Información pendiente de validación oficial',
+      communities: ['Cabecera municipal de Laguna Salada', 'Jaibón', 'La Caya', 'Cruce de Guayacanes'],
+      source: 'X Censo Nacional de Población y Vivienda 2022, Oficina Nacional de Estadística (ONE). Contenido recuperado desde V1 local del proyecto.',
+      year: '2022',
+      note: 'Esta información corresponde específicamente a Laguna Salada y se presenta separada de los distritos municipales de Jaibón, La Caya y Cruce de Guayacanes.',
+    },
+    economy: {
+      status: contentStatuses.PUBLISHED,
+      title: 'Economía',
+      generalDescription: 'La economía de Laguna Salada está fuertemente vinculada a la agricultura, el comercio y los servicios locales.',
+      agriculture: 'La actividad agrícola forma parte esencial de la vida productiva del municipio y continúa siendo uno de los ejes estratégicos para el crecimiento económico local.',
+      commerce: 'El comercio local y los servicios de proximidad sostienen parte de la dinámica diaria del municipio.',
+      productiveActivities: ['Agricultura', 'Comercio local', 'Servicios municipales y comunitarios'],
+      employmentEntrepreneurship: 'El empleo y el emprendimiento local se describen de forma cualitativa hasta contar con estadísticas oficiales validadas.',
+      opportunities: 'Oportunidades económicas pendientes de ampliación mediante planificación institucional y fuentes oficiales.',
+      officialFigures: 'Información pendiente de validación oficial',
+      source: 'Contenido recuperado desde V1 local del proyecto; cifras económicas oficiales pendientes de validación.',
+    },
     landmarks: [
       {
         id: 'parque-maximo-gomez',
@@ -31,6 +54,8 @@ export const municipalConfig = {
         photoUrl: './assets/placeholder-landmark.svg',
         sourceImage: 'images/parque-maximo-gomez.png',
         description: 'Uno de los principales espacios públicos de Laguna Salada, dedicado al encuentro, la recreación y la convivencia de la comunidad.',
+        importance: 'Espacio de encuentro comunitario, recreación y convivencia municipal.',
+        location: 'Referencia municipal pendiente de validación oficial.',
       },
       {
         id: 'palacio-municipal',
@@ -38,14 +63,18 @@ export const municipalConfig = {
         name: 'Palacio Municipal de Laguna Salada',
         photoUrl: '../../images/palacio-municipal.png',
         description: 'Sede del gobierno local y centro de la administración municipal de Laguna Salada, provincia Valverde.',
+        importance: 'Centro de la administración municipal y referencia institucional del gobierno local.',
+        location: 'C/ 30 de Mayo No. 123, Centro del Pueblo, Laguna Salada.',
       },
       {
         id: 'parroquia-san-antonio',
-        status: contentStatuses.REVIEWED,
+        status: contentStatuses.PUBLISHED,
         name: 'Parroquia San Antonio de Padua',
         photoUrl: './assets/placeholder-landmark.svg',
         sourceImage: 'images/parroquia-san-antonio.png',
         description: 'Espacio religioso vinculado a la vida espiritual y comunitaria de Laguna Salada y a la tradición de San Antonio de Padua.',
+        importance: 'Referencia espiritual y cultural asociada a la tradición de San Antonio de Padua.',
+        location: 'Ubicación pendiente de validación oficial.',
       },
       {
         id: 'cementerio-municipal',
@@ -53,6 +82,17 @@ export const municipalConfig = {
         name: 'Cementerio Municipal de Laguna Salada',
         photoUrl: '../../images/cementerio-municipal.jpeg',
         description: 'Espacio municipal destinado al descanso y memoria de los seres queridos de la comunidad de Laguna Salada.',
+        importance: 'Lugar de memoria comunitaria y servicio municipal.',
+        location: 'Ubicación pendiente de validación oficial.',
+      },
+      {
+        id: 'archivo-futuro',
+        status: contentStatuses.REVIEWED,
+        name: 'Lugar emblemático pendiente de publicación',
+        photoUrl: './assets/placeholder-landmark.svg',
+        description: 'Registro revisado no visible hasta publicación oficial.',
+        importance: 'Pendiente de publicación.',
+        location: 'Pendiente de publicación.',
       },
     ],
     authorities: {
@@ -126,5 +166,20 @@ export const municipalConfig = {
     whatsappLocationMessage: { type: 'location', latitude: 'number', longitude: 'number', name: 'string | null', address: 'string | null' },
     whatsappEvidenceMessage: { type: 'image | document', mediaId: 'string', caption: 'string | null' },
     supabaseEvidenceStorage: { bucket: 'ticket-evidence-v11', path: '<institution_id>/pending/<filename>', uploadPending: true, status: 'BLOCKED_UNTIL_EDGE_FUNCTION' },
+  },
+
+};
+
+export const demoMunicipalConfig = {
+  ...municipalConfig,
+  municipality: { name: 'Municipio Demo', shortName: 'Demo', tagline: 'Asistente Virtual Municipal Demo' },
+  reportPolicy: { ...municipalConfig.reportPolicy, activeInstitutionSlug: 'demo-generico', demoGps: undefined },
+  institutionalContent: {
+    history: { status: contentStatuses.PUBLISHED, title: 'Historia del municipio', body: 'Información demo neutral pendiente de validación oficial.', source: 'Configuración demo.' },
+    population: { status: contentStatuses.PUBLISHED, title: 'Población', total: 'Información pendiente de validación oficial', urbanRural: 'Información pendiente de validación oficial', growth: 'Información pendiente de validación oficial', communities: [], source: 'Información pendiente de validación oficial', year: 'Pendiente' },
+    economy: { status: contentStatuses.PUBLISHED, title: 'Economía', generalDescription: 'Descripción demo neutral pendiente de validación oficial.', agriculture: 'Información pendiente de validación oficial', commerce: 'Información pendiente de validación oficial', productiveActivities: [], employmentEntrepreneurship: 'Información pendiente de validación oficial', opportunities: 'Información pendiente de validación oficial', officialFigures: 'Información pendiente de validación oficial', source: 'Información pendiente de validación oficial' },
+    landmarks: [{ id: 'lugar-demo', status: contentStatuses.PUBLISHED, name: 'Lugar emblemático demo', photoUrl: './assets/placeholder-landmark.svg', description: 'Descripción demo pendiente de validación oficial.', importance: 'Información pendiente de validación oficial', location: 'Información pendiente de validación oficial' }],
+    authorities: municipalConfig.institutionalContent.authorities,
+    council: municipalConfig.institutionalContent.council,
   },
 };
