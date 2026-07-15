@@ -21,6 +21,16 @@ const serviceStatusCycle = serviceDeskConfig.statuses;
 const serviceExceptionalStatuses = serviceDeskConfig.exceptionalStatuses;
 
 const legacyCategoryLabel = (category) => typeof category === 'string' ? category : category.label;
+const subtypeLabel = (subtype) => typeof subtype === 'string' ? subtype : subtype.label;
+const formatCurrency = (amount, currency = serviceDeskConfig.currency || 'RD$') => `${currency} ${Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+function getSubtypePricing(service, subtypeName) { return service?.subtypes?.find((subtype) => subtypeLabel(subtype) === subtypeName) || { label: subtypeName, price: null, price_status: 'pendiente', free: false, requires_evaluation: false, payment_required: false, payment_instructions: '', fee_notes: 'Costo pendiente de validación' }; }
+function formatPriceLine(pricing, estimated = true) {
+  if (pricing?.price_status === 'pendiente') return '**Costo:** Pendiente de validación';
+  if (pricing?.free) return '**Costo:** Gratis';
+  if (Number.isFinite(Number(pricing?.price))) return `**Costo${estimated ? ' estimado' : ''}:** ${formatCurrency(pricing.price)}`;
+  return '**Costo:** Pendiente de validación';
+}
+function priceStatusLabel(status) { return status === 'oficial' ? 'oficial' : status === 'pendiente' ? 'pendiente' : 'Demo'; }
 
 
 function isSummaryValidated(item) {
@@ -146,7 +156,7 @@ function validateEvidenceFile(file) {
 
 function defaultWelcome() {
   state.mode = 'menu';
-  bot(`👋 ¡Hola! Soy el asistente virtual de ${municipalConfig.municipality.name}.\n\nEsta demo V1.1 conserva el flujo conversacional ciudadano pensado para WhatsApp.\n\n${buildWelcomeStatisticsText(municipalConfig)}\n\n¿En qué puedo ayudarte hoy?`);
+  bot(`👋 ¡Hola! Soy el asistente virtual de ${municipalConfig.municipality.name}.\n\n${buildWelcomeStatisticsText(municipalConfig)}\n\n¿En qué puedo ayudarte hoy?`);
   quickReplies([
     ['🚨 Reportar una incidencia', conversationIntents.REPORT_INCIDENT],
     ['🏛️ Solicitar un servicio municipal', conversationIntents.REQUEST_MUNICIPAL_SERVICE],
@@ -308,7 +318,7 @@ function showContacts() { const c = municipalConfig.contacts; bot(`📞 ${c.titl
 
 
 function newServiceRequestDraft() {
-  return { caseType: 'Solicitud de servicio', folioPrefix: serviceDeskConfig.folioPrefix, municipality: municipalConfig.municipality.shortName, serviceId: '', category: '', subtype: '', citizenContact: '', sector: '', locationText: '', latitude: null, longitude: null, locationSource: '', description: '', evidence: null, evidenceValidation: null, department: '', assignmentTarget: '', priority: 'Normal', status: serviceStatusCycle[0], timestamps: { createdAt: null, updatedAt: null, assignedAt: null, resolvedAt: null, closedAt: null }, history: [], tracking: '', details: {} };
+  return { caseType: 'Solicitud de servicio', folioPrefix: serviceDeskConfig.folioPrefix, municipality: municipalConfig.municipality.shortName, serviceId: '', category: '', subtype: '', pricing: {}, citizenContact: '', sector: '', locationText: '', latitude: null, longitude: null, locationSource: '', description: '', evidence: null, evidenceValidation: null, department: '', assignmentTarget: '', priority: 'Normal', status: serviceStatusCycle[0], paymentStatus: 'no aplica', futurePaymentMethod: '', futurePaymentReference: '', timestamps: { createdAt: null, updatedAt: null, assignedAt: null, resolvedAt: null, closedAt: null }, history: [], tracking: '', details: {} };
 }
 function getSelectedService() { return serviceDeskConfig.services.find((service) => service.id === state.serviceRequest.serviceId); }
 function startServiceRequest() {
@@ -322,13 +332,15 @@ function selectMunicipalService(serviceId) {
   if (!service) return startServiceRequest();
   Object.assign(state.serviceRequest, { serviceId: service.id, category: service.label, department: service.department, assignmentTarget: service.assignmentTarget });
   state.mode = 'service-subtype';
-  const subtypeLabel = service.flow === 'certification' ? 'tipo de documento' : service.flow === 'space-use' ? 'espacio o servicio solicitado' : 'subtipo';
-  bot(`Selecciona el ${subtypeLabel} para ${service.label}:`);
-  quickReplies(service.subtypes.map((subtype) => [`${subtype}`, `service-subtype:${subtype}`]));
+  const subtypePromptLabel = service.flow === 'certification' ? 'tipo de documento' : service.flow === 'space-use' ? 'espacio o servicio solicitado' : 'subtipo';
+  bot(`Selecciona el ${subtypePromptLabel} para ${service.label}:`);
+  quickReplies(service.subtypes.map((subtype) => [subtypeLabel(subtype), `service-subtype:${subtypeLabel(subtype)}`]));
 }
 function selectServiceSubtype(subtype) {
-  state.serviceRequest.subtype = subtype;
   const service = getSelectedService();
+  const pricing = getSubtypePricing(service, subtype);
+  Object.assign(state.serviceRequest, { subtype, pricing, paymentStatus: pricing.free ? 'exento' : pricing.payment_required ? 'pendiente' : 'no aplica', futurePaymentMethod: '', futurePaymentReference: '' });
+  bot(`${formatPriceLine(pricing)}\n${serviceDeskConfig.priceDisclaimer}\nEstado del precio: ${priceStatusLabel(pricing.price_status)}${pricing.requires_evaluation ? '\nSujeto a evaluación municipal.' : ''}\nNo se procesan pagos ni cargos reales en esta demo.`);
   if (service.flow === 'certification') return askCertificationApplicantData();
   if (service.flow === 'space-use') return askSpaceUseDate();
   state.mode = 'service-sector';
@@ -349,7 +361,7 @@ function askSpaceUsePurpose() { state.mode = 'service-space-purpose'; bot('🎯 
 function askSpaceUsePeople() { state.mode = 'service-space-people'; bot('👥 Indica la cantidad estimada de personas.'); }
 function askServiceContact() { state.mode = 'service-contact'; bot('☎️ Escribe un contacto para seguimiento de la solicitud.'); }
 function askServiceEvidence() { const service = getSelectedService(); if (service.evidence === 'not_required') return askServiceContact(); state.mode = 'service-evidence'; bot(`📷 Evidencia ${service.evidence === 'recommended' ? 'recomendada' : 'opcional'} para esta solicitud. No es obligatoria para continuar.`); quickReplies([['📎 Seleccionar fotografía', 'service-evidence:add'], ['Continuar sin evidencia', 'service-evidence:skip']]); }
-function showServiceSummary() { const r = state.serviceRequest; state.mode = 'service-confirmation'; const detailText = r.description || r.details?.purpose || JSON.stringify(r.details); bot(`✅ Revisa tu solicitud antes de generar el folio ${serviceDeskConfig.folioPrefix}:\n\n**Tipo:** Solicitud de servicio\n**Categoría:** ${r.category}\n**Subtipo:** ${r.subtype}\n**Sector:** ${r.sector || 'No aplica'}\n**Ubicación:** ${r.locationText || 'No aplica'}\n**Descripción:** ${detailText}\n**Evidencia:** ${r.evidence?.name || 'No requerida/seleccionada'}\n**Fecha:** ${formatDateForSummary(r.details?.date)}\n**Hora:** ${formatTimeForSummary(r.details?.time)}\n**Contacto:** ${r.citizenContact}\n**Departamento:** ${r.department}`); quickReplies([['✅ Confirmar solicitud', 'service:confirm'], ['✏️ Corregir información', 'service:correct'], ['↩️ Volver', conversationIntents.MAIN_MENU]]); }
+function showServiceSummary() { const r = state.serviceRequest; state.mode = 'service-confirmation'; const detailText = r.description || r.details?.purpose || JSON.stringify(r.details); const summaryLines = ['✅ Revisa tu solicitud antes de generar el folio ' + serviceDeskConfig.folioPrefix + ':', '', '**Tipo:** Solicitud de servicio', `**Servicio:** ${r.category}`, `**Subtipo:** ${r.subtype}`, `${formatPriceLine(r.pricing)}`, `**Estado del precio:** ${priceStatusLabel(r.pricing?.price_status)}`, `**Estado de pago:** ${r.paymentStatus}`, `**Sector:** ${r.sector || 'No aplica'}`, `**Ubicación:** ${r.locationText || 'No aplica'}`, `**Descripción:** ${detailText}`, `**Evidencia:** ${r.evidence?.name || 'No requerida/seleccionada'}`, `**Fecha:** ${formatDateForSummary(r.details?.date)}`, `**Hora:** ${formatTimeForSummary(r.details?.time)}`, `**Contacto:** ${r.citizenContact}`, `**Departamento:** ${r.department}`, serviceDeskConfig.priceDisclaimer, 'No se procesan pagos ni cargos reales.']; bot(summaryLines.join('\n')); quickReplies([['✅ Confirmar solicitud', 'service:confirm'], ['✏️ Corregir información', 'service:correct'], ['↩️ Volver', conversationIntents.MAIN_MENU]]); }
 function confirmServiceRequest() { const now = new Date().toISOString(); const folio = `${serviceDeskConfig.folioPrefix}${new Date().getFullYear()}-${String(Math.floor(Math.random() * 90000) + 10000)}`; const tracking = crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`; Object.assign(state.serviceRequest, { folio, tracking, timestamps: { ...state.serviceRequest.timestamps, createdAt: now, updatedAt: now }, history: [{ status: 'Recibida', at: now, by: 'chatbot', note: 'Solicitud recibida' }] }); bot(`${serviceDeskConfig.notifications.Recibida.replace('{{folio}}', folio)}\n\nCódigo de seguimiento: ${tracking}\nEstado: Recibida\nDepartamento responsable: ${state.serviceRequest.department}`); serviceActions(); }
 function serviceActions() { quickReplies([['🏠 Menú principal', conversationIntents.MAIN_MENU], ['🎫 Consultar mi reporte o solicitud', conversationIntents.LOOKUP_TICKET]]); }
 function closeResolvedService() { bot('✅ Solicitud cerrada con confirmación ciudadana. Estado: Cerrada.'); backMenu(); }
