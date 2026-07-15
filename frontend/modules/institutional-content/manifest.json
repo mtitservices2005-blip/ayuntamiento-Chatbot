@@ -1,0 +1,11 @@
+{
+  "id": "institutional-content",
+  "name": "Contenido institucional",
+  "version": "0.1.0",
+  "description": "Sección visual multiinstitución para historia, lugares emblemáticos y autoridades municipales.",
+  "entry": "./index.js",
+  "demo": "./demo.html",
+  "mount": "mount",
+  "status": "demo",
+  "data_notice": "Datos demo · no producción"
+}
