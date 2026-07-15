@@ -94,5 +94,37 @@ export const municipalConfig = {
     address: '[PENDIENTE: dirección oficial]',
     openingHours: '[PENDIENTE: horarios oficiales]',
   },
-  reportCategories: ['🗑️ Basura acumulada', '💡 Luminaria dañada', '🛣️ Calle deteriorada', '🌳 Árbol caído', '🚧 Obstrucción de vía', '➕ Otro problema municipal'],
+  reportCategories: [
+    { id: 'trash', label: '🗑️ Basura acumulada', requiresEvidence: true },
+    { id: 'light', label: '💡 Luminaria dañada', requiresEvidence: true },
+    { id: 'road', label: '🛣️ Calle deteriorada', requiresEvidence: true },
+    { id: 'tree', label: '🌳 Árbol caído', requiresEvidence: true },
+    { id: 'blocked-road', label: '🚧 Obstrucción de vía', requiresEvidence: true },
+    { id: 'other', label: '➕ Otro problema municipal', requiresEvidence: false },
+  ],
+  sectors: [
+    'San Antonio',
+    'Puerto Rico',
+    'La Curva',
+    'Pueblo Nuevo',
+    'Las Flores',
+    'Alto de La Hicotea',
+  ],
+  reportPolicy: {
+    activeInstitutionSlug: 'laguna-salada',
+    askMunicipality: false,
+    allowLocationOmission: false,
+    requireEvidenceByDefault: false,
+    demoGps: {
+      latitude: 19.6504,
+      longitude: -71.0934,
+      accuracyMeters: 35,
+      label: 'GPS demo Laguna Salada · no es ubicación real del ciudadano',
+    },
+  },
+  futureContracts: {
+    whatsappLocationMessage: { type: 'location', latitude: 'number', longitude: 'number', name: 'string | null', address: 'string | null' },
+    whatsappEvidenceMessage: { type: 'image | document', mediaId: 'string', caption: 'string | null' },
+    supabaseEvidenceStorage: { bucket: 'ticket-evidence', path: '{institution}/{ticket}/{filename}', uploadPending: true },
+  },
 };
