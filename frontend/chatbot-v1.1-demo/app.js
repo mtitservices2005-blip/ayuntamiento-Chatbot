@@ -96,6 +96,8 @@ function knowMunicipalityMenu() {
   bot('🏛️ Conoce tu municipio. Selecciona una opción:');
   quickReplies([
     ['📜 Historia del municipio', conversationIntents.MUNICIPAL_HISTORY],
+    ['👥 Población', 'municipal_population'],
+    ['💼 Economía', 'municipal_economy'],
     ['📸 Lugares emblemáticos', conversationIntents.LANDMARKS],
     ['👤 Conoce a tu alcalde', conversationIntents.MAYOR_PROFILE],
     ['👥 Conoce a tu vicealcaldesa', conversationIntents.DEPUTY_MAYOR_PROFILE],
@@ -139,10 +141,13 @@ function handlePayload(payload, label) {
   if (payload === conversationIntents.MAIN_MENU) { initializeIntegration(); return defaultWelcome(); }
   if (payload === conversationIntents.KNOW_MUNICIPALITY) return knowMunicipalityMenu();
   if (payload === conversationIntents.MUNICIPAL_HISTORY) return showHistory();
+  if (payload === 'municipal_population') return showPopulation();
+  if (payload === 'municipal_economy') return showEconomy();
   if (payload === conversationIntents.MAYOR_PROFILE) return showAuthority(content.authorities.mayor, 'alcalde');
   if (payload === conversationIntents.DEPUTY_MAYOR_PROFILE) return showAuthority(content.authorities.deputyMayor, 'vicealcaldesa');
   if (payload === conversationIntents.MUNICIPAL_COUNCIL) return showCouncil();
   if (payload === conversationIntents.LANDMARKS) return showLandmarks();
+  if (payload.startsWith('landmark:')) return showLandmarkDetail(payload.replace('landmark:', ''));
   if (payload === conversationIntents.CONTACTS_AND_HOURS) return showContacts();
   if (payload === conversationIntents.REPORT_INCIDENT) return startReport();
   if (payload === conversationIntents.LOOKUP_TICKET) return startTicketLookup();
@@ -163,6 +168,18 @@ function showHistory() {
   else bot(`📜 ${content.history.title}\n\n${content.history.body}`);
   municipalityBackMenu();
 }
+function showPopulation() {
+  const population = content.population;
+  if (!isPublished(population)) bot(`👥 Población\n\nInformación pendiente de validación oficial`);
+  else bot(`👥 ${population.title}\n\nPoblación total: ${population.total || 'Información pendiente de validación oficial'}\nPoblación urbana/rural: ${population.urbanRural || 'Información pendiente de validación oficial'}\nCrecimiento: ${population.growth || 'Información pendiente de validación oficial'}\nComunidades o distritos: ${(population.communities?.length ? population.communities.join(', ') : 'Información pendiente de validación oficial')}\nFuente y año: ${population.source || 'Información pendiente de validación oficial'} · ${population.year || 'año pendiente'}${population.note ? `\n\n${population.note}` : ''}`);
+  municipalityBackMenu();
+}
+function showEconomy() {
+  const economy = content.economy;
+  if (!isPublished(economy)) bot(`💼 Economía\n\nInformación pendiente de validación oficial`);
+  else bot(`💼 ${economy.title}\n\nDescripción general: ${economy.generalDescription}\n\nAgricultura: ${economy.agriculture}\n\nComercio: ${economy.commerce}\n\nPrincipales actividades productivas: ${(economy.productiveActivities?.length ? economy.productiveActivities.join(', ') : 'Información pendiente de validación oficial')}\n\nEmpleo y emprendimiento local: ${economy.employmentEntrepreneurship}\n\nOportunidades económicas: ${economy.opportunities}\n\nCifras oficiales: ${economy.officialFigures}\nFuente: ${economy.source}`);
+  municipalityBackMenu();
+}
 function showAuthority(authority, label) {
   if (!isPublished(authority)) { bot(`ℹ️ ${authority.menuLabel}\n\n${pendingText(`perfil del ${label}`)}`); return municipalityBackMenu(); }
   card({ title: `${authority.name}\n${authority.role}`, image: authority.photoUrl, body: `Período: ${authority.term}\n\nBiografía: ${authority.biography}\n\nTrayectoria: ${authority.career}\n\nMensaje institucional: ${authority.institutionalMessage}`, list: authority.functions });
@@ -176,10 +193,20 @@ function showCouncil() {
 }
 function showLandmarks() {
   const publishedPlaces = content.landmarks.filter(isPublished);
-  bot('📸 Lugares emblemáticos del municipio:');
-  publishedPlaces.forEach((place) => card({ title: place.name, image: place.photoUrl, body: place.description }));
+  bot('📸 Lugares emblemáticos del municipio. Selecciona un lugar para ver su detalle:');
   if (!publishedPlaces.length) bot(pendingText('lugares emblemáticos'));
+  else quickReplies(publishedPlaces.map((place) => [`📍 ${place.name}`, `landmark:${place.id}`]));
   municipalityBackMenu();
+}
+function showLandmarkDetail(placeId) {
+  const place = content.landmarks.find((item) => item.id === placeId && isPublished(item));
+  if (!place) bot(pendingText('detalle del lugar emblemático'));
+  else card({ title: place.name, image: place.photoUrl, body: `${place.description}
+
+Importancia histórica/cultural: ${place.importance || 'Información pendiente de validación oficial'}
+
+Ubicación o referencia: ${place.location || 'Información pendiente de validación oficial'}` });
+  quickReplies([['📸 Volver al listado de lugares', conversationIntents.LANDMARKS], ['🏛️ Volver a Conoce tu municipio', conversationIntents.KNOW_MUNICIPALITY], ['🏠 Menú principal', conversationIntents.MAIN_MENU]]);
 }
 function showContacts() { const c = municipalConfig.contacts; bot(`📞 ${c.title}\n\nTeléfono: ${c.phone}\nCorreo: ${c.email}\nDirección: ${c.address}\nHorario: ${c.openingHours}`); backMenu(); }
 
@@ -195,7 +222,7 @@ function selectCategory(categoryId) {
   state.report.category = legacyCategoryLabel(category);
   state.report.evidenceRequired = Boolean(category.requiresEvidence ?? municipalConfig.reportPolicy.requireEvidenceByDefault);
   state.mode = 'report-sector';
-  bot('📍 Selecciona el sector o barrio de Laguna Salada donde ocurre la incidencia. No te pediré municipio porque esta institución activa ya es Laguna Salada.');
+  bot(`📍 Selecciona el sector o barrio de ${municipalConfig.municipality.shortName} donde ocurre la incidencia. No te pediré municipio porque esta institución activa ya es ${municipalConfig.municipality.shortName}.`);
   quickReplies(quickSectorOptions.map((sector) => [sector === 'Otro sector' ? '➕ Otro sector' : `📍 ${sector}`, sector === 'Otro sector' ? 'sector:other' : `sector:${sector}`]));
 }
 function selectSector(sector) {
@@ -206,7 +233,7 @@ function selectSector(sector) {
   if (municipalConfig.reportPolicy.allowLocationOmission) options.push(['⏭️ Omitir ubicación', 'location:omit']);
   quickReplies(options);
 }
-function askOtherSector() { state.mode = 'report-other-sector'; bot('✍️ Escribe el nombre del sector o barrio de Laguna Salada.'); }
+function askOtherSector() { state.mode = 'report-other-sector'; bot(`✍️ Escribe el nombre del sector o barrio de ${municipalConfig.municipality.shortName}.`); }
 function requestCurrentLocation() {
   state.mode = 'report-location-choice';
   if (window.isSecureContext === false) {
@@ -232,7 +259,7 @@ function requestCurrentLocation() {
     showLocationRetryOptions();
   }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
 }
-function askManualLocation() { state.mode = 'report-manual-location'; bot('✍️ Escribe la dirección, calle, referencia o punto cercano dentro de Laguna Salada.'); }
+function askManualLocation() { state.mode = 'report-manual-location'; bot(`✍️ Escribe la dirección, calle, referencia o punto cercano dentro de ${municipalConfig.municipality.shortName}.`); }
 function omitLocation() { state.report.locationSource = 'omitted-by-policy'; state.report.locationText = 'Ubicación omitida según política institucional'; askDescription(); }
 function askDescription() { state.mode = 'report-description'; bot('📝 Describe brevemente qué está ocurriendo.'); }
 function askEvidence() {
