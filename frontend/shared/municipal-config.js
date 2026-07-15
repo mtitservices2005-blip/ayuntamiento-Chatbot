@@ -167,12 +167,34 @@ export const municipalConfig = {
       ResueltaServicio: '✅ Tu solicitud ha sido atendida.',
       ResueltaCertificacion: '📄 Tu documento está listo para retiro.',
     },
+    currency: 'RD$',
+    priceDisclaimer: 'Precio demo · sujeto a validación oficial del ayuntamiento',
     services: [
-      { id: 'limpieza-ornato', label: '🧹 Limpieza y ornato', department: 'Limpieza y Ornato', assignmentTarget: 'brigade', requiresSector: true, requiresLocation: true, evidence: 'optional', flow: 'operational-description', subtypes: ['Retiro de escombros', 'Recogida especial', 'Limpieza de espacio público'] },
-      { id: 'poda-areas-verdes', label: '🌳 Poda y áreas verdes', department: 'Ornato y Áreas Verdes', assignmentTarget: 'brigade', requiresSector: true, requiresLocation: true, evidence: 'recommended', flow: 'operational-description', subtypes: ['Poda de árbol', 'Árbol peligroso', 'Mantenimiento de área verde'] },
-      { id: 'alumbrado-publico', label: '💡 Alumbrado público', department: 'Alumbrado Público', assignmentTarget: 'brigade', requiresSector: true, requiresLocation: true, evidence: 'optional', flow: 'lighting-reference', subtypes: ['Luminaria averiada', 'Zona oscura', 'Evaluación de iluminación'] },
-      { id: 'certificaciones-documentos', label: '📄 Certificaciones y documentos', department: 'Secretaría Municipal', assignmentTarget: 'administrative_department', requiresSector: false, requiresLocation: false, evidence: 'not_required', flow: 'certification', subtypes: ['Certificación municipal', 'Constancia municipal', 'Otro documento disponible'], requirementsPrompt: 'Indica la información o requisitos disponibles para el documento solicitado.' },
-      { id: 'espacios-servicios-municipales', label: '🏛️ Uso de espacios y servicios municipales', department: 'Servicios Municipales', assignmentTarget: 'administrative_department', requiresSector: false, requiresLocation: false, evidence: 'not_required', flow: 'space-use', subtypes: ['Solicitud de parque o plaza', 'Instalación municipal', 'Actividad comunitaria'] },
+      { id: 'limpieza-ornato', label: '🧹 Limpieza y ornato', department: 'Limpieza y Ornato', assignmentTarget: 'brigade', requiresSector: true, requiresLocation: true, evidence: 'optional', flow: 'operational-description', subtypes: [
+        { label: 'Retiro de escombros', price: 1500, price_status: 'demo', free: false, requires_evaluation: false, payment_required: false, payment_instructions: '', fee_notes: 'Precio demo · sujeto a validación oficial del ayuntamiento' },
+        { label: 'Recogida especial', price: 2000, price_status: 'demo', free: false, requires_evaluation: false, payment_required: false, payment_instructions: '', fee_notes: 'Precio demo · sujeto a validación oficial del ayuntamiento' },
+        { label: 'Limpieza de espacio público', price: null, price_status: 'demo', free: true, requires_evaluation: true, payment_required: false, payment_instructions: '', fee_notes: 'Gratis / sujeto a evaluación · Precio demo · sujeto a validación oficial del ayuntamiento' },
+      ] },
+      { id: 'poda-areas-verdes', label: '🌳 Poda y áreas verdes', department: 'Ornato y Áreas Verdes', assignmentTarget: 'brigade', requiresSector: true, requiresLocation: true, evidence: 'recommended', flow: 'operational-description', subtypes: [
+        { label: 'Poda de árbol', price: 1500, price_status: 'demo', free: false, requires_evaluation: false, payment_required: false, payment_instructions: '', fee_notes: 'Precio demo · sujeto a validación oficial del ayuntamiento' },
+        { label: 'Árbol peligroso', price: null, price_status: 'demo', free: true, requires_evaluation: true, payment_required: false, payment_instructions: '', fee_notes: 'Gratis / sujeto a evaluación · Precio demo · sujeto a validación oficial del ayuntamiento' },
+        { label: 'Mantenimiento de área verde', price: 2500, price_status: 'demo', free: false, requires_evaluation: false, payment_required: false, payment_instructions: '', fee_notes: 'Precio demo · sujeto a validación oficial del ayuntamiento' },
+      ] },
+      { id: 'alumbrado-publico', label: '💡 Alumbrado público', department: 'Alumbrado Público', assignmentTarget: 'brigade', requiresSector: true, requiresLocation: true, evidence: 'optional', flow: 'lighting-reference', subtypes: [
+        { label: 'Luminaria averiada', price: null, price_status: 'demo', free: true, requires_evaluation: false, payment_required: false, payment_instructions: '', fee_notes: 'Precio demo · sujeto a validación oficial del ayuntamiento' },
+        { label: 'Zona oscura', price: null, price_status: 'demo', free: true, requires_evaluation: false, payment_required: false, payment_instructions: '', fee_notes: 'Precio demo · sujeto a validación oficial del ayuntamiento' },
+        { label: 'Evaluación de iluminación', price: null, price_status: 'demo', free: true, requires_evaluation: false, payment_required: false, payment_instructions: '', fee_notes: 'Precio demo · sujeto a validación oficial del ayuntamiento' },
+      ] },
+      { id: 'certificaciones-documentos', label: '📄 Certificaciones y documentos', department: 'Secretaría Municipal', assignmentTarget: 'administrative_department', requiresSector: false, requiresLocation: false, evidence: 'not_required', flow: 'certification', requirementsPrompt: 'Indica la información o requisitos disponibles para el documento solicitado.', subtypes: [
+        { label: 'Certificación municipal', price: 1500, price_status: 'demo', free: false, requires_evaluation: false, payment_required: false, payment_instructions: '', fee_notes: 'Precio demo · sujeto a validación oficial del ayuntamiento' },
+        { label: 'Constancia municipal', price: 2000, price_status: 'demo', free: false, requires_evaluation: false, payment_required: false, payment_instructions: '', fee_notes: 'Precio demo · sujeto a validación oficial del ayuntamiento' },
+        { label: 'Otro documento disponible', price: 3000, price_status: 'demo', free: false, requires_evaluation: false, payment_required: false, payment_instructions: '', fee_notes: 'Precio demo · sujeto a validación oficial del ayuntamiento' },
+      ] },
+      { id: 'espacios-servicios-municipales', label: '🏛️ Uso de espacios y servicios municipales', department: 'Servicios Municipales', assignmentTarget: 'administrative_department', requiresSector: false, requiresLocation: false, evidence: 'not_required', flow: 'space-use', subtypes: [
+        { label: 'Solicitud de parque o plaza', price: 2000, price_status: 'demo', free: false, requires_evaluation: false, payment_required: false, payment_instructions: '', fee_notes: 'Precio demo · sujeto a validación oficial del ayuntamiento' },
+        { label: 'Instalación municipal', price: 3000, price_status: 'demo', free: false, requires_evaluation: false, payment_required: false, payment_instructions: '', fee_notes: 'Precio demo · sujeto a validación oficial del ayuntamiento' },
+        { label: 'Actividad comunitaria', price: null, price_status: 'demo', free: true, requires_evaluation: true, payment_required: false, payment_instructions: '', fee_notes: 'Gratis / sujeto a evaluación · Precio demo · sujeto a validación oficial del ayuntamiento' },
+      ] },
     ],
   },
   reportCategories: [
