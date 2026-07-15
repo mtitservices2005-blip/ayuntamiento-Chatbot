@@ -1,10 +1,16 @@
 {
   "id": "storage",
-  "name": "Storage",
+  "name": "Storage & Evidence V2",
   "surface": "frontend",
   "route": "/storage",
   "owner": "Chatbot Municipal V2",
-  "status": "foundation",
+  "status": "demo-ready",
   "dynamicEntry": "../modules/storage/index.js",
-  "permissions": []
+  "permissions": [
+    "mt_superadmin",
+    "municipal_admin",
+    "supervisor",
+    "brigade_member"
+  ],
+  "demo": "./demo.html"
 }
