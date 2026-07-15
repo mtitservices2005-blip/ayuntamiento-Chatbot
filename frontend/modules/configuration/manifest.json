@@ -4,7 +4,12 @@
   "surface": "frontend",
   "route": "/configuration",
   "owner": "Chatbot Municipal V2",
-  "status": "foundation",
+  "status": "demo",
   "dynamicEntry": "../modules/configuration/index.js",
-  "permissions": []
+  "permissions": [
+    "mt_superadmin",
+    "municipal_admin",
+    "supervisor"
+  ],
+  "demo": "./demo.html"
 }
