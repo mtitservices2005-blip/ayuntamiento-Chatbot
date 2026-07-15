@@ -14,15 +14,6 @@ const isPublished = (item) => item?.status === contentStatuses.PUBLISHED;
 const pendingText = (label) => `[PENDIENTE: ${label} oficial validado por el Ayuntamiento]`;
 const quickSectorOptions = [...municipalConfig.sectors, 'Otro sector'];
 
-const locationContracts = {
-  webDemoGps: municipalConfig.reportPolicy.demoGps,
-  futureWhatsAppLocationMessage: municipalConfig.futureContracts.whatsappLocationMessage,
-};
-const evidenceContracts = {
-  futureWhatsAppEvidenceMessage: municipalConfig.futureContracts.whatsappEvidenceMessage,
-  futureSupabaseStorage: municipalConfig.futureContracts.supabaseEvidenceStorage,
-};
-
 const legacyCategoryLabel = (category) => typeof category === 'string' ? category : category.label;
 
 function newReportDraft() {
@@ -64,10 +55,14 @@ async function initializeIntegration() {
 }
 
 function translateGeolocationError(error) {
-  if (error.code === error.PERMISSION_DENIED) return 'Permiso denegado. Puedes escribir la dirección o referencia manualmente.';
-  if (error.code === error.POSITION_UNAVAILABLE) return 'Ubicación no disponible. El navegador no pudo obtener una ubicación actual.';
-  if (error.code === error.TIMEOUT) return 'Timeout. La solicitud de ubicación agotó el tiempo de espera.';
-  return 'Ubicación no disponible. No fue posible obtener la ubicación actual.';
+  if (error?.code === error?.PERMISSION_DENIED || error?.code === 1) return '🚫 No pudimos acceder a tu ubicación porque el permiso fue rechazado. Puedes escribir una dirección o referencia.';
+  if (error?.code === error?.POSITION_UNAVAILABLE || error?.code === 2) return '📍 Tu ubicación no está disponible en este momento. Puedes escribir una dirección o referencia.';
+  if (error?.code === error?.TIMEOUT || error?.code === 3) return '⏱️ La solicitud de ubicación tardó demasiado. Puedes intentarlo nuevamente o escribir una dirección.';
+  return '📍 No pudimos obtener tu ubicación automáticamente. Puedes escribir una dirección o referencia.';
+}
+
+function showLocationRetryOptions() {
+  quickReplies([['📍 Intentar nuevamente', 'location:gps'], ['✍️ Escribir dirección o referencia', 'location:manual']]);
 }
 
 function validateEvidenceFile(file) {
@@ -80,8 +75,8 @@ function validateEvidenceFile(file) {
   return {
     ok: true,
     kind: 'warning',
-    status: 'BLOCKED',
-    message: 'Archivo válido localmente. Upload real bloqueado: contrato confirmado bucket ticket-evidence-v11, ruta <institution_id>/pending/... y RPC v11_create_citizen_ticket; falta Edge Function autorizada o policy aprobada para upload ciudadano directo.',
+    status: 'Pendiente de envío',
+    message: 'La fotografía fue seleccionada, pero el envío de evidencia aún no está disponible en este entorno.',
   };
 }
 
@@ -214,21 +209,27 @@ function selectSector(sector) {
 function askOtherSector() { state.mode = 'report-other-sector'; bot('✍️ Escribe el nombre del sector o barrio de Laguna Salada.'); }
 function requestCurrentLocation() {
   state.mode = 'report-location-choice';
-  if (!window.isSecureContext) { bot('⚠️ Contexto no seguro: el GPS del navegador requiere HTTPS o localhost. Puedes escribir la dirección o referencia manualmente.'); return selectSector(state.report.sector); }
-  if (!navigator.geolocation) { bot('⚠️ Ubicación no disponible: este navegador no expone navigator.geolocation. Puedes escribir la dirección o referencia manualmente.'); return selectSector(state.report.sector); }
-  bot('Solicitando permiso de ubicación...');
+  if (window.isSecureContext === false) {
+    bot('📍 Para obtener tu ubicación automáticamente, abre este chatbot desde una conexión segura HTTPS. Puedes escribir una dirección o referencia.');
+    return showLocationRetryOptions();
+  }
+  if (!navigator.geolocation) {
+    bot('📍 Este dispositivo o navegador no permite obtener la ubicación automáticamente. Puedes escribir una dirección o referencia.');
+    return showLocationRetryOptions();
+  }
+  bot('📍 Solicitando permiso para acceder a tu ubicación...');
   navigator.geolocation.getCurrentPosition((position) => {
     const { latitude, longitude, accuracy } = position.coords;
     state.report.latitude = latitude;
     state.report.longitude = longitude;
     state.report.accuracy = accuracy;
-    state.report.locationSource = 'browser-geolocation';
-    state.report.locationText = `GPS real del navegador: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}; precisión aproximada ${Math.round(accuracy)} metros`;
-    bot(`📍 Ubicación obtenida correctamente\nLatitud: ${latitude.toFixed(6)}\nLongitud: ${longitude.toFixed(6)}\nPrecisión aproximada: ${Math.round(accuracy)} metros`);
+    state.report.locationSource = 'browser_geolocation';
+    state.report.locationText = 'Ubicación GPS proporcionada';
+    bot('📍 Ubicación obtenida correctamente.\n\nTu ubicación se ha añadido al reporte.');
     askDescription();
   }, (error) => {
-    bot(`⚠️ ${translateGeolocationError(error)}`);
-    askManualLocation();
+    bot(translateGeolocationError(error));
+    showLocationRetryOptions();
   }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
 }
 function askManualLocation() { state.mode = 'report-manual-location'; bot('✍️ Escribe la dirección, calle, referencia o punto cercano dentro de Laguna Salada.'); }
@@ -245,7 +246,7 @@ function skipEvidence() { state.report.evidence = null; showReportSummary(); }
 function showReportSummary() {
   state.mode = 'report-confirmation';
   const evidenceLabel = state.report.evidence ? `${state.report.evidence.name} · ${state.report.evidenceValidation?.status}: ${state.report.evidenceValidation?.message}` : 'Sin evidencia seleccionada';
-  bot(`✅ Revisa tu reporte antes de generar el folio:\n\nCategoría: ${state.report.category}\nSector: ${state.report.sector}\nDirección/GPS: ${state.report.locationText}\nDescripción: ${state.report.description}\nEvidencia seleccionada: ${evidenceLabel}`);
+  bot(`✅ Revisa tu reporte antes de generar el folio:\n\nCategoría: ${state.report.category}\nSector: ${state.report.sector}\nUbicación: ${state.report.locationText}\nDescripción: ${state.report.description}\nEvidencia: ${evidenceLabel}`);
   quickReplies([['✅ Confirmar reporte', 'report:confirm'], ['✏️ Corregir información', 'report:correct']]);
 }
 async function confirmReport() {
@@ -254,7 +255,7 @@ async function confirmReport() {
       const rows = await createCitizenTicket({ institutionId: state.institution.id, category: state.report.category, description: state.report.description, sector: state.report.sector, locationText: state.report.locationText, latitude: state.report.latitude, longitude: state.report.longitude, evidencePath: null });
       const result = Array.isArray(rows) ? rows[0] : rows;
       state.mode = 'menu';
-      bot(`🎫 Reporte creado\n\nFolio: ${result.public_id}\nCódigo de seguimiento: ${result.tracking_secret}\nEstado: Recibido\n\nConserva el folio y el código de seguimiento para consultar tu reporte. La evidencia no se adjuntó porque el upload ciudadano sigue bloqueado hasta contar con Edge Function autorizada.`);
+      bot(`✅ REPORTE CREADO\n\nFolio: ${result.public_id}\nCódigo de seguimiento: ${result.tracking_secret}\nCategoría: ${state.report.category}\nSector: ${state.report.sector}\nUbicación: ${state.report.locationText}\nEstado: Recibido\n\nGuarda tu folio para consultar el estado de tu reporte. La fotografía no fue enviada en este entorno.`);
       return ticketActions();
     } catch (error) {
       bot(`⚠️ Backend no disponible en este momento: ${error.message || 'No fue posible crear el ticket real.'} Usaré fallback demo claramente identificado.`);
@@ -263,7 +264,7 @@ async function confirmReport() {
   const folio = `LS-${new Date().toISOString().slice(2, 10).replaceAll('-', '')}-${String(Math.floor(Math.random() * 9000) + 1000)}`;
   const tracking = crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   state.mode = 'menu';
-  bot(`🎫 REPORTE DEMO CREADO\n\nFolio demo: ${folio}\nCódigo de seguimiento demo: ${tracking}\nCategoría: ${state.report.category}\nSector: ${state.report.sector}\nUbicación: ${state.report.locationText}\nEstado: Recibido\n\nGuarda tu folio y código de seguimiento. Fallback demo: Supabase público no está disponible o autorizado en este entorno. La evidencia no fue subida; ${evidenceContracts.futureSupabaseStorage.bucket} requiere Edge Function segura.`);
+  bot(`✅ REPORTE DEMO CREADO\n\nFolio demo: ${folio}\nCódigo de seguimiento demo: ${tracking}\nCategoría: ${state.report.category}\nSector: ${state.report.sector}\nUbicación: ${state.report.locationText}\nEstado: Recibido\n\nGuarda tu folio para consultar el estado de tu reporte. La fotografía no fue enviada en este entorno.`);
   ticketActions();
 }
 function startReportCorrection() { bot('✏️ Corregiremos el reporte desde el inicio para evitar datos inconsistentes.'); startReport(); }
@@ -292,8 +293,8 @@ function handleEvidenceSelection(event) {
   const previewUrl = file.type?.startsWith('image/') ? URL.createObjectURL(file) : '';
   state.report.evidence = { name: file.name, type: file.type || 'application/octet-stream', size: file.size, previewUrl };
   state.report.evidenceValidation = validation;
-  bot(`📎 Evidencia seleccionada\nArchivo: ${file.name}\nTipo: ${state.report.evidence.type}\nTamaño: ${file.size} bytes\nEstado real: ${validation.status} · ${validation.message}`);
-  if (previewUrl) card({ title: 'Vista previa local de evidencia', image: previewUrl, body: 'Esta imagen solo existe localmente en tu navegador. No se subió a Supabase ni se envió a WhatsApp.' });
+  bot(`📸 La fotografía fue seleccionada, pero el envío de evidencia aún no está disponible en este entorno.`);
+  if (previewUrl) card({ title: 'Vista previa local de evidencia', image: previewUrl, body: 'Esta imagen solo existe localmente en tu navegador y no fue enviada.' });
   showReportSummary();
 }
 
