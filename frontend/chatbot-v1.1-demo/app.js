@@ -4,6 +4,7 @@ import { createCitizenTicket, getPublicInstitutionConfig } from '../../shared/ap
 import { getSupabaseClient } from '../../shared/supabase/client.js';
 
 const chat = document.querySelector('#chat');
+const municipalSummary = document.querySelector('#municipal-summary');
 const input = document.querySelector('#message-input');
 const send = document.querySelector('#send-button');
 const evidenceInput = document.querySelector('#evidence-input');
@@ -12,9 +13,75 @@ const content = municipalConfig.institutionalContent;
 
 const isPublished = (item) => item?.status === contentStatuses.PUBLISHED;
 const pendingText = (label) => `[PENDIENTE: ${label} oficial validado por el Ayuntamiento]`;
+const PENDING_VALIDATION = 'Pendiente de validación oficial';
 const quickSectorOptions = [...municipalConfig.sectors, 'Otro sector'];
 
 const legacyCategoryLabel = (category) => typeof category === 'string' ? category : category.label;
+
+
+function isSummaryValidated(item) {
+  return isPublished(item) && item?.summaryValidated === true;
+}
+
+function formatSourceYear(item) {
+  return [item?.year, item?.source].filter(Boolean).join(' · ');
+}
+
+export function buildMunicipalSummary(profile = municipalConfig) {
+  const institutionalContent = profile.institutionalContent || {};
+  const population = institutionalContent.population;
+  const territorialArea = institutionalContent.territorialArea;
+  const economy = institutionalContent.economy;
+  const economyActivities = isSummaryValidated(economy) && economy.productiveActivities?.length
+    ? economy.productiveActivities.join(' · ')
+    : PENDING_VALIDATION;
+
+  return {
+    title: `${profile.municipality?.shortName || 'Municipio'} en cifras`,
+    items: [
+      {
+        label: 'Población',
+        value: isSummaryValidated(population) && population.total ? population.total : PENDING_VALIDATION,
+        meta: isSummaryValidated(population) ? formatSourceYear(population) : '',
+      },
+      {
+        label: 'Área territorial',
+        value: isSummaryValidated(territorialArea) && territorialArea.valueKm2 ? `${territorialArea.valueKm2} km²` : PENDING_VALIDATION,
+        meta: isSummaryValidated(territorialArea) ? formatSourceYear(territorialArea) : '',
+      },
+      {
+        label: 'Economía',
+        value: economyActivities,
+        meta: isSummaryValidated(economy) && economy.source ? economy.source : '',
+      },
+    ],
+  };
+}
+
+function renderMunicipalSummary(profile = municipalConfig) {
+  if (!municipalSummary) return;
+  const summary = buildMunicipalSummary(profile);
+  municipalSummary.replaceChildren();
+  const title = document.createElement('h2');
+  title.textContent = summary.title;
+  const list = document.createElement('dl');
+  summary.items.forEach((item) => {
+    const group = document.createElement('div');
+    const term = document.createElement('dt');
+    const value = document.createElement('dd');
+    term.textContent = item.label;
+    value.textContent = item.value;
+    group.append(term, value);
+    if (item.meta) {
+      const meta = document.createElement('dd');
+      meta.className = 'summary-meta';
+      meta.textContent = item.meta;
+      group.append(meta);
+    }
+    list.append(group);
+  });
+  municipalSummary.append(title, list);
+}
 
 function newReportDraft() {
   return {
@@ -35,6 +102,7 @@ function newReportDraft() {
 document.querySelector('#municipal-logo').src = municipalConfig.branding.logoUrl;
 document.querySelector('#municipal-name').textContent = municipalConfig.municipality.name;
 document.documentElement.style.setProperty('--wa-green', municipalConfig.branding.primaryColor);
+renderMunicipalSummary(municipalConfig);
 
 initializeIntegration();
 defaultWelcome();
