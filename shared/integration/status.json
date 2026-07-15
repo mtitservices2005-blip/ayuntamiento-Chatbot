@@ -1,0 +1,14 @@
+{
+  "last_verified": "2026-07-15",
+  "modules": [
+    { "module_id": "authentication", "integration_status": "PARTIAL", "backend_contracts": ["Supabase Auth", "v11_memberships", "v11_app_role"], "blockers": ["No claims de rol canónicos; memberships son autoridad"], "demo_fallback": true, "last_verified": "2026-07-15" },
+    { "module_id": "citizen-portal", "integration_status": "PARTIAL", "backend_contracts": ["v11_get_public_institution_config", "v11_create_citizen_ticket", "v11_get_citizen_ticket"], "blockers": ["Upload ciudadano de evidencia requiere Edge Function no versionada"], "demo_fallback": true, "last_verified": "2026-07-15" },
+    { "module_id": "municipal-panel", "integration_status": "PARTIAL", "backend_contracts": ["v11_tickets", "v11_brigades", "v11_assign_ticket", "v11_review_ticket_resolution"], "blockers": ["Administración amplia sin RPC dedicada"], "demo_fallback": true, "last_verified": "2026-07-15" },
+    { "module_id": "brigade-portal", "integration_status": "PARTIAL", "backend_contracts": ["v11_tickets", "v11_brigade_members", "v11_start_ticket_work", "v11_submit_ticket_resolution"], "blockers": ["No existe RPC específica para resolver brigada activa"], "demo_fallback": true, "last_verified": "2026-07-15" },
+    { "module_id": "master-admin", "integration_status": "PARTIAL", "backend_contracts": ["v11_institutions", "v11_memberships", "v11_brigades"], "blockers": ["No hay RPCs admin transaccionales ni gestión de auth.users"], "demo_fallback": true, "last_verified": "2026-07-15" },
+    { "module_id": "configuration", "integration_status": "PARTIAL", "backend_contracts": ["v11_get_public_institution_config", "v11_institution_settings"], "blockers": ["Escritura requiere revisión de UI y auditoría"], "demo_fallback": true, "last_verified": "2026-07-15" },
+    { "module_id": "notifications", "integration_status": "DEMO", "backend_contracts": ["v11_integration_events"], "blockers": ["Sin proveedor, worker ni grants cliente"], "demo_fallback": true, "last_verified": "2026-07-15" },
+    { "module_id": "audit", "integration_status": "PARTIAL", "backend_contracts": ["v11_audit_events", "v11_audit_read"], "blockers": ["Solo lectura; sin correlation_id formal"], "demo_fallback": true, "last_verified": "2026-07-15" },
+    { "module_id": "storage", "integration_status": "PARTIAL", "backend_contracts": ["ticket-evidence-v11", "resolution-evidence-v11", "v11_storage_institution_id", "v11_can_read_storage_object", "v11_can_write_resolution_object"], "blockers": ["Buckets son prerrequisito manual; upload ciudadano bloqueado"], "demo_fallback": true, "last_verified": "2026-07-15" }
+  ]
+}
