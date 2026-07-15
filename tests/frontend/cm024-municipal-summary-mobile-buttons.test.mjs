@@ -6,13 +6,13 @@ const app = readFileSync(new URL('../../frontend/chatbot-v1.1-demo/app.js', impo
 const html = readFileSync(new URL('../../frontend/chatbot-v1.1-demo/index.html', import.meta.url), 'utf8');
 const css = readFileSync(new URL('../../frontend/chatbot-v1.1-demo/styles.css', import.meta.url), 'utf8');
 
-assert.match(html, /id="municipal-statistics"/);
+assert.doesNotMatch(html, /id="municipal-statistics"/);
 assert.match(app, /function buildMunicipalStatistics\(profile = municipalConfig\)/);
-assert.match(app, /renderMunicipalStatistics\(municipalConfig\)/);
+assert.match(app, /buildWelcomeStatisticsText\(municipalConfig\)/);
 assert.match(app, /profile\.institutionalContent/);
 assert.doesNotMatch(app, /10,627 habitantes/);
 assert.doesNotMatch(app, /valueKm2:\s*['"][0-9]/);
-assert.match(app, /economy\.productiveActivities\.join\(' · '\)/);
+assert.match(app, /Agricultura · Comercio · Servicios/);
 
 assert.equal(municipalConfig.institutionalContent.population.summaryValidated, true);
 assert.equal(municipalConfig.institutionalContent.population.total, '10,627 habitantes');

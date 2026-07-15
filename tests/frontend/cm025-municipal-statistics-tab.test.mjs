@@ -6,28 +6,23 @@ const app = readFileSync(new URL('../../frontend/chatbot-v1.1-demo/app.js', impo
 const html = readFileSync(new URL('../../frontend/chatbot-v1.1-demo/index.html', import.meta.url), 'utf8');
 const css = readFileSync(new URL('../../frontend/chatbot-v1.1-demo/styles.css', import.meta.url), 'utf8');
 
-assert.match(html, /id="municipal-statistics"/);
-assert.match(html, />Estadísticas<\/button>/);
-assert.match(html, /aria-expanded="false"/);
-assert.match(html, /id="municipal-statistics-panel"[^>]*hidden/);
+assert.doesNotMatch(html, /id="municipal-statistics"/);
+assert.doesNotMatch(html, />Estadísticas<\/button>/);
 
 assert.match(app, /function buildMunicipalStatistics\(profile = municipalConfig\)/);
-assert.match(app, /renderMunicipalStatistics\(municipalConfig\)/);
-assert.match(app, /closeMunicipalStatistics\(\);/);
-assert.match(app, /function toggleMunicipalStatistics\(\)/);
-assert.match(app, /setMunicipalStatisticsOpen\(!municipalStatistics\?\.classList\.contains\('is-open'\)\)/);
-assert.match(app, /municipalStatisticsToggle\?\.addEventListener\('click', toggleMunicipalStatistics\)/);
+assert.match(app, /buildWelcomeStatisticsText\(municipalConfig\)/);
+assert.equal((app.match(/buildWelcomeStatisticsText\(municipalConfig\)/g) || []).length, 1);
 
-const statisticsBuilder = app.slice(app.indexOf('export function buildMunicipalStatistics'), app.indexOf('function renderMunicipalStatistics'));
+const statisticsBuilder = app.slice(app.indexOf('export function buildMunicipalStatistics'), app.indexOf('function buildWelcomeStatisticsText'));
 assert.match(statisticsBuilder, /label: 'Población'/);
 assert.match(statisticsBuilder, /label: 'Área km²'/);
 assert.match(statisticsBuilder, /label: 'Economía'/);
 assert.doesNotMatch(statisticsBuilder, /source|year|meta|note|generalDescription|agriculture|commerce|officialFigures/);
 assert.match(app, /const PENDING_VALIDATION = 'Pendiente'/);
-assert.match(statisticsBuilder, /economy\.productiveActivities\.join\(' · '\)/);
+assert.match(statisticsBuilder, /Agricultura · Comercio · Servicios/);
 
 const handlePayloadBlock = app.slice(app.indexOf('function handlePayload'), app.indexOf('function showHistory'));
-assert.match(handlePayloadBlock, /closeMunicipalStatistics\(\);\n\s*user\(label\);/);
+assert.match(handlePayloadBlock, /user\(label\);/);
 for (const payload of [
   'REPORT_INCIDENT',
   'LOOKUP_TICKET',
@@ -50,16 +45,11 @@ for (const payload of [
 }
 
 const handleTextBlock = app.slice(app.indexOf('function handleText'), app.indexOf('function handleEvidenceSelection'));
-assert.match(handleTextBlock, /closeMunicipalStatistics\(\);\n\s*user\(text\);/);
+assert.match(handleTextBlock, /user\(text\);/);
 assert.match(handleTextBlock, /report-manual-location/);
 assert.match(handleTextBlock, /report-description/);
 assert.match(handleTextBlock, /ticket-lookup/);
 
-assert.match(css, /\.municipal-statistics-toggle/);
-assert.match(css, /transition:\s*max-height 160ms ease, opacity 140ms ease, transform 140ms ease, margin-top 160ms ease/);
-assert.match(css, /\.municipal-statistics-panel\[hidden\]/);
-assert.match(css, /max-height:\s*0/);
-assert.match(css, /grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/);
 
 assert.equal(municipalConfig.institutionalContent.population.total, '10,627 habitantes');
 assert.equal(municipalConfig.institutionalContent.territorialArea.valueKm2, '');

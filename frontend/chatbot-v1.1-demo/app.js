@@ -4,12 +4,11 @@ import { createCitizenTicket, getPublicInstitutionConfig } from '../../shared/ap
 import { getSupabaseClient } from '../../shared/supabase/client.js';
 
 const chat = document.querySelector('#chat');
-const municipalStatistics = document.querySelector('#municipal-statistics');
-const municipalStatisticsToggle = document.querySelector('#municipal-statistics-toggle');
-const municipalStatisticsPanel = document.querySelector('#municipal-statistics-panel');
 const input = document.querySelector('#message-input');
 const send = document.querySelector('#send-button');
 const evidenceInput = document.querySelector('#evidence-input');
+const dateInput = document.querySelector('#date-input');
+const timeInput = document.querySelector('#time-input');
 const state = { mode: 'menu', report: {}, serviceRequest: {}, ticket: null, institution: null, integrationMode: 'DEMO' };
 const content = municipalConfig.institutionalContent;
 
@@ -34,7 +33,7 @@ export function buildMunicipalStatistics(profile = municipalConfig) {
   const territorialArea = institutionalContent.territorialArea;
   const economy = institutionalContent.economy;
   const economyActivities = isSummaryValidated(economy) && economy.productiveActivities?.length
-    ? economy.productiveActivities.join(' · ')
+    ? 'Agricultura · Comercio · Servicios'
     : PENDING_VALIDATION;
 
   return {
@@ -55,36 +54,29 @@ export function buildMunicipalStatistics(profile = municipalConfig) {
   };
 }
 
-function renderMunicipalStatistics(profile = municipalConfig) {
-  if (!municipalStatisticsPanel) return;
+function buildWelcomeStatisticsText(profile = municipalConfig) {
   const summary = buildMunicipalStatistics(profile);
-  municipalStatisticsPanel.replaceChildren();
-  const list = document.createElement('dl');
-  summary.items.forEach((item) => {
-    const group = document.createElement('div');
-    const term = document.createElement('dt');
-    const value = document.createElement('dd');
-    term.textContent = item.label;
-    value.textContent = item.value;
-    group.append(term, value);
-    list.append(group);
-  });
-  municipalStatisticsPanel.append(list);
+  return summary.items.map((item) => `**${item.label.replace(' km²', '')}:** ${item.value}`).join('\n');
 }
 
-function setMunicipalStatisticsOpen(isOpen) {
-  if (!municipalStatistics || !municipalStatisticsToggle || !municipalStatisticsPanel) return;
-  municipalStatistics.classList.toggle('is-open', isOpen);
-  municipalStatisticsToggle.setAttribute('aria-expanded', String(isOpen));
-  municipalStatisticsPanel.hidden = !isOpen;
+function formatDateForSummary(value) {
+  if (!value) return 'No aplica';
+  const [year, month, day] = value.split('-').map(Number);
+  return new Intl.DateTimeFormat('es-DO', { dateStyle: 'long' }).format(new Date(year, month - 1, day));
 }
 
-function closeMunicipalStatistics() {
-  setMunicipalStatisticsOpen(false);
+function formatTimeForSummary(value) {
+  if (!value) return 'No aplica';
+  const [hour, minute] = value.split(':').map(Number);
+  return new Intl.DateTimeFormat('es-DO', { timeStyle: 'short' }).format(new Date(2026, 0, 1, hour, minute));
 }
 
-function toggleMunicipalStatistics() {
-  setMunicipalStatisticsOpen(!municipalStatistics?.classList.contains('is-open'));
+function todayIsoDate() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function isPastDate(value) {
+  return Boolean(value) && value < todayIsoDate();
 }
 
 function newReportDraft() {
@@ -106,8 +98,7 @@ function newReportDraft() {
 document.querySelector('#municipal-logo').src = municipalConfig.branding.logoUrl;
 document.querySelector('#municipal-name').textContent = municipalConfig.municipality.name;
 document.documentElement.style.setProperty('--wa-green', municipalConfig.branding.primaryColor);
-renderMunicipalStatistics(municipalConfig);
-closeMunicipalStatistics();
+dateInput.min = todayIsoDate();
 
 initializeIntegration();
 defaultWelcome();
@@ -155,7 +146,7 @@ function validateEvidenceFile(file) {
 
 function defaultWelcome() {
   state.mode = 'menu';
-  bot(`👋 ¡Hola! Soy el asistente virtual de ${municipalConfig.municipality.name}.\n\nEsta demo V1.1 conserva el flujo conversacional ciudadano pensado para WhatsApp.\n\n¿En qué puedo ayudarte hoy?`);
+  bot(`👋 ¡Hola! Soy el asistente virtual de ${municipalConfig.municipality.name}.\n\nEsta demo V1.1 conserva el flujo conversacional ciudadano pensado para WhatsApp.\n\n${buildWelcomeStatisticsText(municipalConfig)}\n\n¿En qué puedo ayudarte hoy?`);
   quickReplies([
     ['🚨 Reportar una incidencia', conversationIntents.REPORT_INCIDENT],
     ['🏛️ Solicitar un servicio municipal', conversationIntents.REQUEST_MUNICIPAL_SERVICE],
@@ -185,7 +176,21 @@ function user(text) { addBubble(text, 'user'); }
 function addBubble(text, type) {
   const el = document.createElement('div');
   el.className = `bubble ${type === 'user' ? 'user' : ''}`;
-  el.textContent = text;
+  if (type === 'user') {
+    el.textContent = text;
+  } else {
+    text.split('\n').forEach((line, index) => {
+      if (index) el.append(document.createElement('br'));
+      const match = line.match(/^\*\*([^*]+):\*\*\s?(.*)$/);
+      if (match) {
+        const strong = document.createElement('strong');
+        strong.textContent = `${match[1]}:`;
+        el.append(strong, ` ${match[2]}`);
+      } else {
+        el.append(line);
+      }
+    });
+  }
   chat.append(el);
   chat.scrollTop = chat.scrollHeight;
 }
@@ -211,8 +216,11 @@ function card({ title, image, body, list }) {
 }
 
 function handlePayload(payload, label) {
-  closeMunicipalStatistics();
   user(label);
+  if (payload === 'service-date:pick') { dateInput.showPicker?.(); dateInput.focus(); return; }
+  if (payload === 'service-time:pick') { timeInput.showPicker?.(); timeInput.focus(); return; }
+  if (payload === 'service-date:type') return bot('✏️ Escribe la fecha en formato AAAA-MM-DD.');
+  if (payload === 'service-time:type') return bot('✏️ Escribe la hora en formato HH:MM.');
   if (payload === conversationIntents.MAIN_MENU) { initializeIntegration(); return defaultWelcome(); }
   if (payload === conversationIntents.KNOW_MUNICIPALITY) return knowMunicipalityMenu();
   if (payload === conversationIntents.MUNICIPAL_HISTORY) return showHistory();
@@ -335,13 +343,13 @@ function askServiceManualLocation() { state.mode = 'service-manual-location'; bo
 function askServiceDetails() { const service = getSelectedService(); state.mode = service.flow === 'lighting-reference' ? 'service-lighting-reference' : 'service-description'; bot(service.flow === 'lighting-reference' ? '💡 Escribe la referencia del poste o lugar.' : '📝 Describe brevemente el servicio solicitado.'); }
 function askCertificationApplicantData() { state.mode = 'service-cert-applicant'; bot('📄 Escribe los datos del solicitante para el documento. No se solicitará GPS ni fotografía obligatoria.'); }
 function askCertificationRequirements() { state.mode = 'service-cert-requirements'; bot(getSelectedService().requirementsPrompt); }
-function askSpaceUseDate() { state.mode = 'service-space-date'; bot('📅 Indica la fecha solicitada para el espacio o servicio municipal.'); }
-function askSpaceUseTime() { state.mode = 'service-space-time'; bot('🕒 Indica el horario solicitado.'); }
+function askSpaceUseDate() { state.mode = 'service-space-date'; dateInput.min = todayIsoDate(); bot('📅 Selecciona la fecha solicitada para el espacio o servicio municipal. Usaré el calendario nativo del dispositivo.'); quickReplies([['📅 Abrir calendario', 'service-date:pick'], ['✏️ Escribir fecha AAAA-MM-DD', 'service-date:type']]); }
+function askSpaceUseTime() { state.mode = 'service-space-time'; bot('🕒 Selecciona la hora solicitada. Usaré el reloj nativo del dispositivo.'); quickReplies([['🕒 Abrir reloj', 'service-time:pick'], ['✏️ Escribir hora HH:MM', 'service-time:type']]); }
 function askSpaceUsePurpose() { state.mode = 'service-space-purpose'; bot('🎯 Indica el propósito de la actividad.'); }
 function askSpaceUsePeople() { state.mode = 'service-space-people'; bot('👥 Indica la cantidad estimada de personas.'); }
 function askServiceContact() { state.mode = 'service-contact'; bot('☎️ Escribe un contacto para seguimiento de la solicitud.'); }
 function askServiceEvidence() { const service = getSelectedService(); if (service.evidence === 'not_required') return askServiceContact(); state.mode = 'service-evidence'; bot(`📷 Evidencia ${service.evidence === 'recommended' ? 'recomendada' : 'opcional'} para esta solicitud. No es obligatoria para continuar.`); quickReplies([['📎 Seleccionar fotografía', 'service-evidence:add'], ['Continuar sin evidencia', 'service-evidence:skip']]); }
-function showServiceSummary() { const r = state.serviceRequest; state.mode = 'service-confirmation'; bot(`✅ Revisa tu solicitud antes de generar el folio ${serviceDeskConfig.folioPrefix}:\n\nTipo de caso: Solicitud de servicio\nServicio: ${r.category}\nSubtipo: ${r.subtype}\nDepartamento: ${r.department}\nSector: ${r.sector || 'No aplica'}\nUbicación: ${r.locationText || 'No aplica'}\nDetalles: ${r.description || JSON.stringify(r.details)}\nContacto: ${r.citizenContact}\nEvidencia: ${r.evidence?.name || 'No requerida/seleccionada'}\nEstado inicial: ${r.status}`); quickReplies([['✅ Confirmar solicitud', 'service:confirm'], ['✏️ Corregir información', 'service:correct']]); }
+function showServiceSummary() { const r = state.serviceRequest; state.mode = 'service-confirmation'; const detailText = r.description || r.details?.purpose || JSON.stringify(r.details); bot(`✅ Revisa tu solicitud antes de generar el folio ${serviceDeskConfig.folioPrefix}:\n\n**Tipo:** Solicitud de servicio\n**Categoría:** ${r.category}\n**Subtipo:** ${r.subtype}\n**Sector:** ${r.sector || 'No aplica'}\n**Ubicación:** ${r.locationText || 'No aplica'}\n**Descripción:** ${detailText}\n**Evidencia:** ${r.evidence?.name || 'No requerida/seleccionada'}\n**Fecha:** ${formatDateForSummary(r.details?.date)}\n**Hora:** ${formatTimeForSummary(r.details?.time)}\n**Contacto:** ${r.citizenContact}\n**Departamento:** ${r.department}`); quickReplies([['✅ Confirmar solicitud', 'service:confirm'], ['✏️ Corregir información', 'service:correct'], ['↩️ Volver', conversationIntents.MAIN_MENU]]); }
 function confirmServiceRequest() { const now = new Date().toISOString(); const folio = `${serviceDeskConfig.folioPrefix}${new Date().getFullYear()}-${String(Math.floor(Math.random() * 90000) + 10000)}`; const tracking = crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`; Object.assign(state.serviceRequest, { folio, tracking, timestamps: { ...state.serviceRequest.timestamps, createdAt: now, updatedAt: now }, history: [{ status: 'Recibida', at: now, by: 'chatbot', note: 'Solicitud recibida' }] }); bot(`${serviceDeskConfig.notifications.Recibida.replace('{{folio}}', folio)}\n\nCódigo de seguimiento: ${tracking}\nEstado: Recibida\nDepartamento responsable: ${state.serviceRequest.department}`); serviceActions(); }
 function serviceActions() { quickReplies([['🏠 Menú principal', conversationIntents.MAIN_MENU], ['🎫 Consultar mi reporte o solicitud', conversationIntents.LOOKUP_TICKET]]); }
 function closeResolvedService() { bot('✅ Solicitud cerrada con confirmación ciudadana. Estado: Cerrada.'); backMenu(); }
@@ -410,8 +418,8 @@ function skipEvidence() { state.report.evidence = null; showReportSummary(); }
 function showReportSummary() {
   state.mode = 'report-confirmation';
   const evidenceLabel = state.report.evidence ? `${state.report.evidence.name} · ${state.report.evidenceValidation?.status}: ${state.report.evidenceValidation?.message}` : 'Sin evidencia seleccionada';
-  bot(`✅ Revisa tu reporte antes de generar el folio:\n\nCategoría: ${state.report.category}\nSector: ${state.report.sector}\nUbicación: ${state.report.locationText}\nDescripción: ${state.report.description}\nEvidencia: ${evidenceLabel}`);
-  quickReplies([['✅ Confirmar reporte', 'report:confirm'], ['✏️ Corregir información', 'report:correct']]);
+  bot(`✅ Revisa tu reporte antes de generar el folio:\n\n**Tipo:** Incidencia\n**Categoría:** ${state.report.category}\n**Sector:** ${state.report.sector}\n**Ubicación:** ${state.report.locationText}\n**Descripción:** ${state.report.description}\n**Evidencia:** ${evidenceLabel}`);
+  quickReplies([['✅ Confirmar reporte', 'report:confirm'], ['✏️ Corregir información', 'report:correct'], ['↩️ Volver', conversationIntents.MAIN_MENU]]);
 }
 async function confirmReport() {
   if (state.integrationMode === 'REAL' && state.institution?.id) {
@@ -441,7 +449,6 @@ function handleText() {
   const text = input.value.trim();
   if (!text) return;
   input.value = '';
-  closeMunicipalStatistics();
   user(text);
   if (state.mode === 'report-other-sector') { return selectSector(text); }
   if (state.mode === 'service-other-sector') { return selectServiceSector(text); }
@@ -449,7 +456,7 @@ function handleText() {
   if (state.mode === 'service-description' || state.mode === 'service-lighting-reference') { state.serviceRequest.description = text; return askServiceEvidence(); }
   if (state.mode === 'service-cert-applicant') { state.serviceRequest.details.applicant = text; return askCertificationRequirements(); }
   if (state.mode === 'service-cert-requirements') { state.serviceRequest.description = text; return askServiceContact(); }
-  if (state.mode === 'service-space-date') { state.serviceRequest.details.date = text; return askSpaceUseTime(); }
+  if (state.mode === 'service-space-date') { if (isPastDate(text)) { bot('⚠️ Esa fecha ya pasó. Selecciona o escribe una fecha futura para continuar.'); return askSpaceUseDate(); } state.serviceRequest.details.date = text; return askSpaceUseTime(); }
   if (state.mode === 'service-space-time') { state.serviceRequest.details.time = text; return askSpaceUsePurpose(); }
   if (state.mode === 'service-space-purpose') { state.serviceRequest.details.purpose = text; return askSpaceUsePeople(); }
   if (state.mode === 'service-space-people') { state.serviceRequest.details.people = text; return askServiceContact(); }
@@ -474,7 +481,23 @@ function handleEvidenceSelection(event) {
   showReportSummary();
 }
 
-municipalStatisticsToggle?.addEventListener('click', toggleMunicipalStatistics);
+dateInput.addEventListener('change', () => {
+  if (!dateInput.value) return;
+  if (isPastDate(dateInput.value)) {
+    bot('⚠️ Esa fecha ya pasó. Puedes corregirla con el calendario.');
+    dateInput.value = '';
+    return askSpaceUseDate();
+  }
+  state.serviceRequest.details.date = dateInput.value;
+  user(formatDateForSummary(dateInput.value));
+  askSpaceUseTime();
+});
+timeInput.addEventListener('change', () => {
+  if (!timeInput.value) return;
+  state.serviceRequest.details.time = timeInput.value;
+  user(formatTimeForSummary(timeInput.value));
+  askSpaceUsePurpose();
+});
 send.addEventListener('click', handleText);
 input.addEventListener('keydown', (event) => { if (event.key === 'Enter') handleText(); });
 evidenceInput.addEventListener('change', handleEvidenceSelection);
