@@ -19,6 +19,8 @@ assert.match(mainMenuBlock, /Conoce tu municipio/);
 assert.match(mainMenuBlock, /Contactos y horarios/);
 assert.doesNotMatch(mainMenuBlock, /Conoce a tu alcalde/);
 assert.doesNotMatch(mainMenuBlock, /Conoce a tu vicealcaldesa/);
+const mainMenuLabels = [...mainMenuBlock.matchAll(/\['([^']+)', conversationIntents\./g)].map((match) => match[1].replace(/^[^A-Za-zÁÉÍÓÚÑáéíóúñ]+\s*/, ''));
+assert.deepEqual(mainMenuLabels, ['Reportar una incidencia', 'Consultar mi reporte', 'Conoce tu municipio', 'Contactos y horarios']);
 
 const submenuBlock = app.slice(app.indexOf('function knowMunicipalityMenu'), app.indexOf('function bot'));
 for (const label of ['Historia del municipio', 'Lugares emblemáticos', 'Conoce a tu alcalde', 'Conoce a tu vicealcaldesa', 'Concejo municipal', 'Volver al menú principal']) {

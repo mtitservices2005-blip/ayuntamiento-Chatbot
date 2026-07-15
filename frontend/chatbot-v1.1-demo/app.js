@@ -1,16 +1,18 @@
 import { contentStatuses, municipalConfig } from '../shared/municipal-config.js';
 import { conversationIntents } from '../shared/contracts/channel-contracts.js';
+import { createCitizenTicket, getPublicInstitutionConfig } from '../../shared/api/v11.js';
+import { getSupabaseClient } from '../../shared/supabase/client.js';
 
 const chat = document.querySelector('#chat');
 const input = document.querySelector('#message-input');
 const send = document.querySelector('#send-button');
 const evidenceInput = document.querySelector('#evidence-input');
-const state = { mode: 'menu', report: {}, ticket: null };
+const state = { mode: 'menu', report: {}, ticket: null, institution: null, integrationMode: 'DEMO' };
 const content = municipalConfig.institutionalContent;
 
 const isPublished = (item) => item?.status === contentStatuses.PUBLISHED;
 const pendingText = (label) => `[PENDIENTE: ${label} oficial validado por el Ayuntamiento]`;
-const quickSectorOptions = [...municipalConfig.sectors, 'Otro sector de Laguna Salada'];
+const quickSectorOptions = [...municipalConfig.sectors, 'Otro sector'];
 
 const locationContracts = {
   webDemoGps: municipalConfig.reportPolicy.demoGps,
@@ -34,6 +36,7 @@ function newReportDraft() {
     locationSource: '',
     description: '',
     evidence: null,
+    evidenceValidation: null,
     evidenceRequired: false,
   };
 }
@@ -42,7 +45,45 @@ document.querySelector('#municipal-logo').src = municipalConfig.branding.logoUrl
 document.querySelector('#municipal-name').textContent = municipalConfig.municipality.name;
 document.documentElement.style.setProperty('--wa-green', municipalConfig.branding.primaryColor);
 
+initializeIntegration();
 defaultWelcome();
+
+
+async function initializeIntegration() {
+  if (!getSupabaseClient({ optional: true })) {
+    state.integrationMode = 'DEMO';
+    return;
+  }
+  try {
+    state.institution = await getPublicInstitutionConfig(municipalConfig.reportPolicy.activeInstitutionSlug);
+    state.integrationMode = state.institution?.id ? 'REAL' : 'DEMO';
+  } catch (error) {
+    state.integrationMode = 'DEMO';
+    console.warn('Supabase público no disponible para chatbot V1.1; se usará fallback demo.', error);
+  }
+}
+
+function translateGeolocationError(error) {
+  if (error.code === error.PERMISSION_DENIED) return 'Permiso denegado. Puedes escribir la dirección o referencia manualmente.';
+  if (error.code === error.POSITION_UNAVAILABLE) return 'Ubicación no disponible. El navegador no pudo obtener una ubicación actual.';
+  if (error.code === error.TIMEOUT) return 'Timeout. La solicitud de ubicación agotó el tiempo de espera.';
+  return 'Ubicación no disponible. No fue posible obtener la ubicación actual.';
+}
+
+function validateEvidenceFile(file) {
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  const maxBytes = 8 * 1024 * 1024;
+  if (!file) return { ok: false, kind: 'info', status: 'sin evidencia', message: 'No se seleccionó evidencia.' };
+  if (!allowedTypes.includes(file.type)) return { ok: false, kind: 'error', status: 'MIME inválido', message: 'Solo se permiten fotografías JPEG, PNG o WebP.' };
+  if (file.size <= 0) return { ok: false, kind: 'error', status: 'archivo vacío', message: 'La fotografía está vacía.' };
+  if (file.size > maxBytes) return { ok: false, kind: 'error', status: 'tamaño excedido', message: 'La fotografía supera 8 MB.' };
+  return {
+    ok: true,
+    kind: 'warning',
+    status: 'BLOCKED',
+    message: 'Archivo válido localmente. Upload real bloqueado: contrato confirmado bucket ticket-evidence-v11, ruta <institution_id>/pending/... y RPC v11_create_citizen_ticket; falta Edge Function autorizada o policy aprobada para upload ciudadano directo.',
+  };
+}
 
 function defaultWelcome() {
   state.mode = 'menu';
@@ -100,7 +141,7 @@ function card({ title, image, body, list }) {
 
 function handlePayload(payload, label) {
   user(label);
-  if (payload === conversationIntents.MAIN_MENU) return defaultWelcome();
+  if (payload === conversationIntents.MAIN_MENU) { initializeIntegration(); return defaultWelcome(); }
   if (payload === conversationIntents.KNOW_MUNICIPALITY) return knowMunicipalityMenu();
   if (payload === conversationIntents.MUNICIPAL_HISTORY) return showHistory();
   if (payload === conversationIntents.MAYOR_PROFILE) return showAuthority(content.authorities.mayor, 'alcalde');
@@ -113,7 +154,7 @@ function handlePayload(payload, label) {
   if (payload.startsWith('category:')) return selectCategory(payload.replace('category:', ''));
   if (payload === 'sector:other') return askOtherSector();
   if (payload.startsWith('sector:')) return selectSector(payload.replace('sector:', ''));
-  if (payload === 'location:gps-demo') return useDemoGps();
+  if (payload === 'location:gps') return requestCurrentLocation();
   if (payload === 'location:manual') return askManualLocation();
   if (payload === 'location:omit') return omitLocation();
   if (payload === 'evidence:add') return requestEvidenceFile();
@@ -160,52 +201,75 @@ function selectCategory(categoryId) {
   state.report.evidenceRequired = Boolean(category.requiresEvidence ?? municipalConfig.reportPolicy.requireEvidenceByDefault);
   state.mode = 'report-sector';
   bot('📍 Selecciona el sector o barrio de Laguna Salada donde ocurre la incidencia. No te pediré municipio porque esta institución activa ya es Laguna Salada.');
-  quickReplies(quickSectorOptions.map((sector) => [sector === 'Otro sector de Laguna Salada' ? '➕ Otro sector' : `📍 ${sector}`, sector === 'Otro sector de Laguna Salada' ? 'sector:other' : `sector:${sector}`]));
+  quickReplies(quickSectorOptions.map((sector) => [sector === 'Otro sector' ? '➕ Otro sector' : `📍 ${sector}`, sector === 'Otro sector' ? 'sector:other' : `sector:${sector}`]));
 }
 function selectSector(sector) {
   state.report.sector = sector;
   state.mode = 'report-location-choice';
   bot('📌 ¿Cómo deseas indicar la ubicación exacta del problema?');
-  const options = [['📡 Compartir ubicación GPS demo', 'location:gps-demo'], ['✍️ Escribir dirección o referencia', 'location:manual']];
+  const options = [['📍 Usar mi ubicación actual', 'location:gps'], ['✍️ Escribir dirección o referencia', 'location:manual']];
   if (municipalConfig.reportPolicy.allowLocationOmission) options.push(['⏭️ Omitir ubicación', 'location:omit']);
   quickReplies(options);
 }
-function askOtherSector() { state.mode = 'report-other-sector'; bot('✍️ Escribe el nombre del sector. Esta instancia solo gestiona reportes correspondientes a Laguna Salada.'); }
-function useDemoGps() {
-  const gps = municipalConfig.reportPolicy.demoGps;
-  state.report.latitude = gps.latitude;
-  state.report.longitude = gps.longitude;
-  state.report.locationSource = 'web-demo-gps';
-  state.report.locationText = `${gps.label} (${gps.latitude}, ${gps.longitude}; precisión simulada ${gps.accuracyMeters} m)`;
-  bot(`📡 Ubicación GPS simulada registrada.\n\n${state.report.locationText}\n\nContrato futuro WhatsApp Location Message preparado: ${JSON.stringify(locationContracts.futureWhatsAppLocationMessage)}.`);
-  askDescription();
+function askOtherSector() { state.mode = 'report-other-sector'; bot('✍️ Escribe el nombre del sector o barrio de Laguna Salada.'); }
+function requestCurrentLocation() {
+  state.mode = 'report-location-choice';
+  if (!window.isSecureContext) { bot('⚠️ Contexto no seguro: el GPS del navegador requiere HTTPS o localhost. Puedes escribir la dirección o referencia manualmente.'); return selectSector(state.report.sector); }
+  if (!navigator.geolocation) { bot('⚠️ Ubicación no disponible: este navegador no expone navigator.geolocation. Puedes escribir la dirección o referencia manualmente.'); return selectSector(state.report.sector); }
+  bot('Solicitando permiso de ubicación...');
+  navigator.geolocation.getCurrentPosition((position) => {
+    const { latitude, longitude, accuracy } = position.coords;
+    state.report.latitude = latitude;
+    state.report.longitude = longitude;
+    state.report.accuracy = accuracy;
+    state.report.locationSource = 'browser-geolocation';
+    state.report.locationText = `GPS real del navegador: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}; precisión aproximada ${Math.round(accuracy)} metros`;
+    bot(`📍 Ubicación obtenida correctamente\nLatitud: ${latitude.toFixed(6)}\nLongitud: ${longitude.toFixed(6)}\nPrecisión aproximada: ${Math.round(accuracy)} metros`);
+    askDescription();
+  }, (error) => {
+    bot(`⚠️ ${translateGeolocationError(error)}`);
+    askManualLocation();
+  }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
 }
 function askManualLocation() { state.mode = 'report-manual-location'; bot('✍️ Escribe la dirección, calle, referencia o punto cercano dentro de Laguna Salada.'); }
 function omitLocation() { state.report.locationSource = 'omitted-by-policy'; state.report.locationText = 'Ubicación omitida según política institucional'; askDescription(); }
 function askDescription() { state.mode = 'report-description'; bot('📝 Describe brevemente qué está ocurriendo.'); }
 function askEvidence() {
   state.mode = 'report-evidence';
-  const requiredText = state.report.evidenceRequired ? 'Esta categoría requiere evidencia antes de confirmar.' : 'Puedes agregar evidencia demo antes de confirmar.';
-  bot(`📷 Fotografía o evidencia. ${requiredText}\n\nEn esta demo puedes seleccionar un archivo, ver su nombre y una vista previa local. Evidencia demo · no enviada.`);
-  quickReplies([['📎 Seleccionar archivo demo', 'evidence:add'], ...(state.report.evidenceRequired ? [] : [['Continuar sin evidencia', 'evidence:skip']])]);
+  const requiredText = state.report.evidenceRequired ? 'Esta categoría requiere evidencia cuando la infraestructura lo permita.' : 'Puedes agregar evidencia antes de confirmar.';
+  bot(`📷 Fotografía o evidencia. ${requiredText}\n\nSelecciona una fotografía desde cámara o galería si tu navegador lo soporta. Validaré MIME/tamaño y mostraré preview local; no fingiré upload exitoso.`);
+  quickReplies([['📎 Seleccionar fotografía', 'evidence:add'], ['Continuar sin evidencia', 'evidence:skip']]);
 }
 function requestEvidenceFile() { evidenceInput.click(); }
 function skipEvidence() { state.report.evidence = null; showReportSummary(); }
 function showReportSummary() {
   state.mode = 'report-confirmation';
-  const evidenceLabel = state.report.evidence ? `${state.report.evidence.name} · Evidencia demo · no enviada` : 'Sin evidencia seleccionada';
-  bot(`✅ Revisa tu reporte antes de generar el folio demo:\n\nCategoría: ${state.report.category}\nSector: ${state.report.sector}\nDirección/GPS: ${state.report.locationText}\nDescripción: ${state.report.description}\nEvidencia seleccionada: ${evidenceLabel}`);
-  quickReplies([['✅ Confirmar', 'report:confirm'], ['✏️ Corregir', 'report:correct']]);
+  const evidenceLabel = state.report.evidence ? `${state.report.evidence.name} · ${state.report.evidenceValidation?.status}: ${state.report.evidenceValidation?.message}` : 'Sin evidencia seleccionada';
+  bot(`✅ Revisa tu reporte antes de generar el folio:\n\nCategoría: ${state.report.category}\nSector: ${state.report.sector}\nDirección/GPS: ${state.report.locationText}\nDescripción: ${state.report.description}\nEvidencia seleccionada: ${evidenceLabel}`);
+  quickReplies([['✅ Confirmar reporte', 'report:confirm'], ['✏️ Corregir información', 'report:correct']]);
 }
-function confirmReport() {
+async function confirmReport() {
+  if (state.integrationMode === 'REAL' && state.institution?.id) {
+    try {
+      const rows = await createCitizenTicket({ institutionId: state.institution.id, category: state.report.category, description: state.report.description, sector: state.report.sector, locationText: state.report.locationText, latitude: state.report.latitude, longitude: state.report.longitude, evidencePath: null });
+      const result = Array.isArray(rows) ? rows[0] : rows;
+      state.mode = 'menu';
+      bot(`🎫 Reporte creado\n\nFolio: ${result.public_id}\nCódigo de seguimiento: ${result.tracking_secret}\nEstado: Recibido\n\nConserva el folio y el código de seguimiento para consultar tu reporte. La evidencia no se adjuntó porque el upload ciudadano sigue bloqueado hasta contar con Edge Function autorizada.`);
+      return ticketActions();
+    } catch (error) {
+      bot(`⚠️ Backend no disponible en este momento: ${error.message || 'No fue posible crear el ticket real.'} Usaré fallback demo claramente identificado.`);
+    }
+  }
   const folio = `LS-${new Date().toISOString().slice(2, 10).replaceAll('-', '')}-${String(Math.floor(Math.random() * 9000) + 1000)}`;
+  const tracking = crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   state.mode = 'menu';
-  bot(`🎫 REPORTE DEMO CREADO\n\nFolio demo: ${folio}\nCategoría: ${state.report.category}\nSector: ${state.report.sector}\nUbicación: ${state.report.locationText}\nEstado: Recibido\n\nGuarda tu folio para consultar el estado. La evidencia queda marcada como demo y no fue enviada. Contratos futuros: ${JSON.stringify(evidenceContracts.futureSupabaseStorage)}.`);
-  backMenu();
+  bot(`🎫 REPORTE DEMO CREADO\n\nFolio demo: ${folio}\nCódigo de seguimiento demo: ${tracking}\nCategoría: ${state.report.category}\nSector: ${state.report.sector}\nUbicación: ${state.report.locationText}\nEstado: Recibido\n\nGuarda tu folio y código de seguimiento. Fallback demo: Supabase público no está disponible o autorizado en este entorno. La evidencia no fue subida; ${evidenceContracts.futureSupabaseStorage.bucket} requiere Edge Function segura.`);
+  ticketActions();
 }
 function startReportCorrection() { bot('✏️ Corregiremos el reporte desde el inicio para evitar datos inconsistentes.'); startReport(); }
 function startTicketLookup() { state.mode = 'ticket-lookup'; bot('🎫 Escribe tu número de ticket para consultar el estado.\n\nEjemplo demo: LS-260715-0001'); }
 function backMenu() { quickReplies([['🏠 Menú principal', conversationIntents.MAIN_MENU]]); }
+function ticketActions() { quickReplies([['🏠 Menú principal', conversationIntents.MAIN_MENU], ['🎫 Consultar mi reporte', conversationIntents.LOOKUP_TICKET]]); }
 function municipalityBackMenu() { quickReplies([['🏛️ Volver a Conoce tu municipio', conversationIntents.KNOW_MUNICIPALITY], ['🏠 Menú principal', conversationIntents.MAIN_MENU]]); }
 
 function handleText() {
@@ -213,7 +277,7 @@ function handleText() {
   if (!text) return;
   input.value = '';
   user(text);
-  if (state.mode === 'report-other-sector') { state.report.sector = text; return selectSector(text); }
+  if (state.mode === 'report-other-sector') { return selectSector(text); }
   if (state.mode === 'report-manual-location') { state.report.locationText = text; state.report.locationSource = 'manual-address'; return askDescription(); }
   if (state.mode === 'report-description') { state.report.description = text; return askEvidence(); }
   if (state.mode === 'ticket-lookup') { state.mode = 'menu'; bot(`🔎 Resultado demo para ${text.toUpperCase()}\n\nEstado: 🟡 Recibido\nCanal: Conversacional V1.1\nNota: la consulta real se conectará al backend sin depender del canal WhatsApp o web.`); backMenu(); return; }
@@ -224,10 +288,12 @@ function handleText() {
 function handleEvidenceSelection(event) {
   const file = event.target.files?.[0];
   if (!file) return;
+  const validation = validateEvidenceFile(file);
   const previewUrl = file.type?.startsWith('image/') ? URL.createObjectURL(file) : '';
-  state.report.evidence = { name: file.name, type: file.type || 'application/octet-stream', size: file.size, previewUrl, demoOnly: true };
-  bot(`📎 Evidencia demo · no enviada\nArchivo: ${file.name}\nTipo: ${state.report.evidence.type}\nTamaño: ${file.size} bytes`);
-  if (previewUrl) card({ title: 'Vista previa local de evidencia demo', image: previewUrl, body: 'Esta imagen solo existe en tu navegador. No se subió a Supabase ni se envió a WhatsApp.' });
+  state.report.evidence = { name: file.name, type: file.type || 'application/octet-stream', size: file.size, previewUrl };
+  state.report.evidenceValidation = validation;
+  bot(`📎 Evidencia seleccionada\nArchivo: ${file.name}\nTipo: ${state.report.evidence.type}\nTamaño: ${file.size} bytes\nEstado real: ${validation.status} · ${validation.message}`);
+  if (previewUrl) card({ title: 'Vista previa local de evidencia', image: previewUrl, body: 'Esta imagen solo existe localmente en tu navegador. No se subió a Supabase ni se envió a WhatsApp.' });
   showReportSummary();
 }
 
