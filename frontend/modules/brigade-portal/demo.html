@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Portal de Brigadas V2 · Demo</title>
+    <meta name="description" content="Demo visual local del Portal de Brigadas V2 con datos simulados y modo offline demo.">
+    <style>html,body,#app{margin:0;min-height:100%;}body{background:#edf4f8;}</style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module">
+      import { mount } from './index.js';
+
+      mount(document.getElementById('app'), {
+        municipalityName: 'Ayuntamiento Demo de Saibot',
+      });
+    </script>
+  </body>
+</html>
