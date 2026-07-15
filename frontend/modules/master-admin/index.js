@@ -1,9 +1,72 @@
 export const moduleId = 'master-admin';
 
-export function mount(container, context = {}) {
-  if (!container) {
-    throw new Error('A mount container is required for master-admin.');
-  }
-  container.dataset.v2Module = moduleId;
-  container.textContent = context.placeholder ?? 'Módulo V2: master-admin';
+const DEMO_NOTICE = 'Datos demo · no producción';
+const roles = ['mt_superadmin', 'municipal_admin', 'supervisor', 'brigade_member'];
+
+const institutions = [
+  { id: 'saibot', name: 'Ayuntamiento de Saibot', slug: 'saibot', status: 'Activa', plan: 'Enterprise', createdAt: '2026-07-01', admin: 'Laura Méndez', users: 128, brigades: 9, ticketsMonth: 342, compliance: 94, activity: 98, open: 31, logo: 'SA', contact: 'laura@saibot.demo', categories: ['Alumbrado', 'Bacheo', 'Limpieza'], sectors: ['Centro', 'Norte', 'Ribera'], risk: 'Bajo', publicConfig: 'Portal ciudadano habilitado, WhatsApp demo conectado' },
+  { id: 'villa-norte', name: 'Municipio Villa Norte', slug: 'villa-norte', status: 'Activa', plan: 'Pro', createdAt: '2026-06-18', admin: 'Carlos Ibarra', users: 74, brigades: 5, ticketsMonth: 188, compliance: 87, activity: 83, open: 46, logo: 'VN', contact: 'admin@villanorte.demo', categories: ['Recolección', 'Parques', 'Agua'], sectors: ['Norte', 'Mercado', 'Industrial'], risk: 'Medio', publicConfig: 'Portal público con categorías prioritarias' },
+  { id: 'puerto-claro', name: 'Puerto Claro', slug: 'puerto-claro', status: 'Implementación', plan: 'Starter', createdAt: '2026-07-10', admin: 'Sofía Ramos', users: 22, brigades: 2, ticketsMonth: 41, compliance: 72, activity: 61, open: 18, logo: 'PC', contact: 'sofia@puertoclaro.demo', categories: ['Playas', 'Residuos', 'Vialidad'], sectors: ['Malecón', 'Centro'], risk: 'Alto', publicConfig: 'Configuración pública incompleta' },
+  { id: 'san-jardin', name: 'San Jardín', slug: 'san-jardin', status: 'Pausada', plan: 'Pro', createdAt: '2026-05-28', admin: 'Ricardo Luna', users: 45, brigades: 3, ticketsMonth: 79, compliance: 68, activity: 42, open: 35, logo: 'SJ', contact: 'ricardo@sanjardin.demo', categories: ['Jardines', 'Alumbrado'], sectors: ['Oriente', 'Poniente'], risk: 'Alto', publicConfig: 'Panel municipal pausado por validación demo' },
+];
+
+const demoUsers = [
+  ['Mariana Silva', 'MT IT Services', 'mt_superadmin', 'Activo', '2026-07-15 09:30'],
+  ['Laura Méndez', 'Ayuntamiento de Saibot', 'municipal_admin', 'Activo', '2026-07-15 08:50'],
+  ['Pedro Castillo', 'Ayuntamiento de Saibot', 'supervisor', 'Activo', '2026-07-14 17:20'],
+  ['Ana Ruiz', 'Ayuntamiento de Saibot', 'brigade_member', 'Activo', '2026-07-15 07:40'],
+  ['Sofía Ramos', 'Puerto Claro', 'municipal_admin', 'Inactivo', '2026-07-12 11:10'],
+  ['Elena Pardo', 'San Jardín', 'supervisor', 'Inactivo', '2026-07-08 15:05'],
+];
+
+const auditEvents = [
+  'Institución creada: Puerto Claro', 'Usuario agregado: Ana Ruiz', 'Brigada creada: Cuadrilla Malecón',
+  'Configuración modificada: Villa Norte', 'Ticket auditado: SAI-2026-0715-031', 'Alerta generada: baja resolución San Jardín',
+  'Institución desactivada temporalmente: San Jardín'
+];
+const alerts = [
+  ['Baja tasa de resolución', 'San Jardín presenta cumplimiento menor a 70%.', 'Alta'],
+  ['Exceso de tickets pendientes', 'Villa Norte acumula 46 incidencias abiertas.', 'Media'],
+  ['Brigadas inactivas', 'Puerto Claro requiere confirmar turnos.', 'Alta'],
+  ['Configuración incompleta', 'Faltan sectores y branding público.', 'Media'],
+  ['Errores de integración', 'WhatsApp Business Platform en modo sandbox demo.', 'Baja'],
+  ['Falta de actividad reciente', 'Sin auditorías nuevas en 72h para San Jardín.', 'Media'],
+];
+
+function metric(label, value, tone = '') { return `<article class="metric ${tone}"><span>${label}</span><strong>${value}</strong><small>${DEMO_NOTICE}</small></article>`; }
+function byId(id) { return document.getElementById(id); }
+function getFiltered() {
+  const q = byId('institutionSearch')?.value.toLowerCase() || '';
+  const status = byId('statusFilter')?.value || 'all';
+  const plan = byId('planFilter')?.value || 'all';
+  const sort = byId('sortFilter')?.value || 'activity';
+  return institutions.filter(i => (!q || `${i.name} ${i.slug} ${i.admin}`.toLowerCase().includes(q)) && (status === 'all' || i.status === status) && (plan === 'all' || i.plan === plan)).sort((a,b) => sort === 'compliance' ? b.compliance - a.compliance : b.activity - a.activity);
 }
+function renderInstitutionCards() {
+  const list = byId('institutionList');
+  list.innerHTML = getFiltered().map(i => `<article class="institution-card"><div class="logo">${i.logo}</div><div><h3>${i.name}</h3><p>${i.slug} · ${i.status} · ${i.plan}</p></div><dl><div><dt>Alta</dt><dd>${i.createdAt}</dd></div><div><dt>Admin</dt><dd>${i.admin}</dd></div><div><dt>Usuarios</dt><dd>${i.users}</dd></div><div><dt>Brigadas</dt><dd>${i.brigades}</dd></div><div><dt>Tickets mes</dt><dd>${i.ticketsMonth}</dd></div><div><dt>Cumplimiento</dt><dd>${i.compliance}%</dd></div></dl><button data-detail="${i.id}">Ver detalle</button></article>`).join('');
+  list.querySelectorAll('[data-detail]').forEach(btn => btn.addEventListener('click', () => renderDetail(btn.dataset.detail)));
+}
+function renderDetail(id = institutions[0].id) {
+  const i = institutions.find(item => item.id === id) || institutions[0];
+  byId('detail').innerHTML = `<div class="detail-head"><div class="logo big">${i.logo}</div><div><p class="eyebrow">Detalle de institución · ${DEMO_NOTICE}</p><h2>${i.name}</h2><p>${i.publicConfig}</p></div></div><div class="action-row"><button>Editar configuración</button><button>${i.status === 'Activa' ? 'Desactivar' : 'Activar'} institución</button><button>Gestionar usuarios</button><button>Ver auditoría</button><button>Abrir panel municipal</button><button>Crear brigada</button></div><div class="detail-grid"><section><h3>Información general</h3><p>Slug: ${i.slug}</p><p>Plan: ${i.plan}</p><p>Contacto: ${i.contact}</p><p>Estado: ${i.status}</p></section><section><h3>Categorías y sectores</h3><p>${i.categories.join(', ')}</p><p>${i.sectors.join(', ')}</p></section><section><h3>Equipos</h3><p>Administradores: ${Math.max(1, Math.round(i.users * .04))}</p><p>Supervisores: ${Math.max(2, Math.round(i.users * .12))}</p><p>Brigadas: ${i.brigades}</p><p>Usuarios: ${i.users}</p></section><section><h3>Métricas y riesgos</h3><p>Tickets recientes: ${i.ticketsMonth}</p><p>Abiertas: ${i.open}</p><p>Cumplimiento: ${i.compliance}%</p><p>Riesgo: ${i.risk}</p></section></div><h3>Timeline de actividad</h3><ol class="timeline">${auditEvents.slice(0,5).map(e => `<li>${e}</li>`).join('')}</ol>`;
+}
+function renderUsers() {
+  const role = byId('roleFilter')?.value || 'all'; const inst = byId('userInstitutionFilter')?.value || 'all';
+  byId('userRows').innerHTML = demoUsers.filter(u => (role === 'all' || u[2] === role) && (inst === 'all' || u[1] === inst)).map(u => `<tr><td>${u[0]}</td><td>${u[1]}</td><td><code>${u[2]}</code></td><td>${u[3]}</td><td>${u[4]}</td><td><button>Ver detalle</button></td></tr>`).join('');
+}
+function renderOnboarding() {
+  const values = [...document.querySelectorAll('[data-onboard]')].map(el => `<li><strong>${el.dataset.onboard}:</strong> ${el.value || 'Pendiente demo'}</li>`).join('');
+  byId('onboardSummary').innerHTML = `<h3>Resumen antes de crear</h3><ul>${values}</ul><p>${DEMO_NOTICE}. No se persisten datos reales.</p>`;
+}
+export function mount(container) {
+  if (!container) throw new Error('A mount container is required for master-admin.');
+  container.dataset.v2Module = moduleId;
+  const totals = institutions.reduce((a,i) => ({ users:a.users+i.users, brigades:a.brigades+i.brigades, tickets:a.tickets+i.ticketsMonth, open:a.open+i.open, compliance:a.compliance+i.compliance }), {users:0,brigades:0,tickets:0,open:0,compliance:0});
+  container.innerHTML = `<main class="master-admin"><style>${css()}</style><header class="hero"><p class="eyebrow">MT IT Services · Master Admin V2</p><h1>Panel SaaS multiinstitución</h1><span class="badge">${DEMO_NOTICE}</span><p>Demo visual para operar ayuntamientos, roles, salud operativa y auditoría sin usar producción ni datos reales.</p></header><nav class="tabs"><a href="#dashboard">Dashboard</a><a href="#institutions">Instituciones</a><a href="#detail">Detalle</a><a href="#onboarding">Onboarding</a><a href="#users">Usuarios</a><a href="#health">Salud</a><a href="#audit">Auditoría</a></nav><section id="dashboard" class="metrics">${metric('Total de instituciones', institutions.length)}${metric('Instituciones activas', institutions.filter(i=>i.status==='Activa').length)}${metric('Usuarios activos', totals.users)}${metric('Brigadas registradas', totals.brigades)}${metric('Tickets del mes', totals.tickets)}${metric('Cumplimiento promedio', Math.round(totals.compliance/institutions.length)+'%')}${metric('Incidencias abiertas', totals.open, 'warn')}${metric('Alertas operativas', alerts.length, 'danger')}</section><section id="institutions" class="panel"><h2>Gestión de instituciones</h2><div class="filters"><input id="institutionSearch" placeholder="Buscar ayuntamiento, slug o admin"><select id="statusFilter"><option value="all">Todos los estados</option><option>Activa</option><option>Implementación</option><option>Pausada</option></select><select id="planFilter"><option value="all">Todos los planes</option><option>Starter</option><option>Pro</option><option>Enterprise</option></select><select id="sortFilter"><option value="activity">Orden por actividad</option><option value="compliance">Orden por cumplimiento</option></select></div><div id="institutionList" class="institution-list"></div></section><section id="detail" class="panel"></section><section id="onboarding" class="panel"><h2>Onboarding de nuevo ayuntamiento</h2><div class="wizard"><input data-onboard="Datos institucionales" placeholder="Nombre institucional"><input data-onboard="Contacto" placeholder="Correo y teléfono"><input data-onboard="Logo" placeholder="Logo demo / iniciales"><input data-onboard="Categorías" placeholder="Categorías separadas por coma"><input data-onboard="Sectores" placeholder="Sectores"><input data-onboard="Administrador inicial" placeholder="Nombre del administrador"><select data-onboard="Plan"><option>Starter</option><option>Pro</option><option>Enterprise</option></select><button id="previewOnboarding">Confirmación demo</button></div><div id="onboardSummary" class="summary"></div></section><section id="users" class="panel"><h2>Usuarios y roles</h2><p>Roles preparados: ${roles.map(r=>`<code>${r}</code>`).join(' ')}</p><div class="filters"><select id="roleFilter"><option value="all">Todos los roles</option>${roles.map(r=>`<option>${r}</option>`).join('')}</select><select id="userInstitutionFilter"><option value="all">Todas las instituciones</option>${institutions.map(i=>`<option>${i.name}</option>`).join('')}<option>MT IT Services</option></select></div><div class="table-wrap"><table><thead><tr><th>Usuario</th><th>Institución</th><th>Rol</th><th>Estado</th><th>Último acceso demo</th><th>Acción</th></tr></thead><tbody id="userRows"></tbody></table></div></section><section id="health" class="panel"><h2>Salud operativa demo</h2><div class="health-grid">${['Supabase','Autenticación','Storage','Realtime','Auditoría','Notificaciones','RLS','Billing futuro','SmartWaste','WhatsApp Business Platform'].map((h,idx)=>`<article><strong>${h}</strong><span>${idx%3===0?'Degradado demo':'Operativo demo'}</span></article>`).join('')}</div><h3>Estado por institución</h3><ul>${institutions.map(i=>`<li>${i.name}: ${i.risk} · últimas incidencias simuladas ${i.open}</li>`).join('')}</ul></section><section id="audit" class="panel"><h2>Actividad, auditoría y alertas</h2><ol class="timeline">${auditEvents.map(e=>`<li>${e}</li>`).join('')}</ol><div class="alerts">${alerts.map(a=>`<article><strong>${a[0]}</strong><p>${a[1]}</p><span>${a[2]}</span></article>`).join('')}</div></section><footer>Preparado para integración futura con Supabase Auth, instituciones, memberships, roles, RLS, settings, auditoría, billing, métricas agregadas, Realtime, SmartWaste y WhatsApp Business Platform. Sin llaves privilegiadas en frontend.</footer></main>`;
+  ['institutionSearch','statusFilter','planFilter','sortFilter'].forEach(id => byId(id).addEventListener('input', renderInstitutionCards));
+  ['roleFilter','userInstitutionFilter'].forEach(id => byId(id).addEventListener('input', renderUsers));
+  byId('previewOnboarding').addEventListener('click', renderOnboarding);
+  renderInstitutionCards(); renderDetail(); renderUsers(); renderOnboarding();
+}
+function css(){return `*{box-sizing:border-box}body{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;color:#12213f}.master-admin{padding:24px;max-width:1440px;margin:auto}.hero,.panel,.metric{background:rgba(255,255,255,.92);border:1px solid #d9e5ff;border-radius:24px;box-shadow:0 18px 50px rgba(24,61,120,.10)}.hero{padding:32px;background:linear-gradient(135deg,#0f2f68,#2563eb);color:white}.eyebrow{letter-spacing:.12em;text-transform:uppercase;font-size:.78rem;font-weight:800}.badge{display:inline-flex;background:#fef3c7;color:#7c2d12;border-radius:999px;padding:8px 12px;font-weight:800}.tabs{display:flex;gap:10px;overflow:auto;padding:16px 0;position:sticky;top:0;background:#eef4ff;z-index:2}.tabs a,.action-row button,button{border:0;border-radius:999px;background:#1d4ed8;color:white;padding:10px 14px;font-weight:700;text-decoration:none;cursor:pointer}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.metric{padding:18px}.metric span,.metric small{display:block;color:#64748b}.metric strong{font-size:2rem}.warn strong{color:#b45309}.danger strong{color:#dc2626}.panel{margin-top:18px;padding:24px}.filters,.wizard,.action-row{display:flex;gap:12px;flex-wrap:wrap;margin:14px 0}input,select{border:1px solid #cbd5e1;border-radius:14px;padding:12px;min-width:200px;background:white}.institution-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.institution-card{border:1px solid #dbeafe;border-radius:20px;padding:18px;background:#f8fbff}.logo{display:inline-grid;place-items:center;width:52px;height:52px;border-radius:18px;background:#dbeafe;color:#1e40af;font-weight:900}.big{width:76px;height:76px;font-size:1.35rem}.institution-card dl,.detail-grid,.health-grid,.alerts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.institution-card dt{font-size:.75rem;color:#64748b}.institution-card dd{margin:0;font-weight:800}.detail-head{display:flex;gap:18px;align-items:center}.timeline li{margin:10px 0;padding:10px 14px;background:#f1f5f9;border-radius:14px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:left;border-bottom:1px solid #e2e8f0;padding:12px}code{background:#eef2ff;color:#3730a3;padding:3px 7px;border-radius:8px}.health-grid article,.alerts article,.summary{border:1px solid #dbeafe;background:#f8fbff;border-radius:18px;padding:16px}footer{padding:26px;color:#475569}@media (max-width:900px){.metrics,.institution-list,.detail-grid,.health-grid,.alerts{grid-template-columns:1fr}.master-admin{padding:14px}.hero,.panel{border-radius:18px;padding:18px}.tabs a{white-space:nowrap}.detail-head{align-items:flex-start}.institution-card dl{grid-template-columns:1fr 1fr}}@media (max-width:560px){.metrics{grid-template-columns:1fr}.filters input,.filters select,.wizard input,.wizard select,.wizard button{width:100%;min-width:0}.action-row button{width:100%}.metric strong{font-size:1.6rem}.detail-head{flex-direction:column}table{min-width:620px}}`}
