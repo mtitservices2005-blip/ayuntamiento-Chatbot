@@ -1,25 +1,12 @@
 import { AUTH_ROLES, normalizeRole } from './roles.js';
-
-let supabaseClient = null;
+import { configureSupabaseClient as configureClient, getSupabaseClient } from '../supabase/client.js';
+import { getMembershipContext } from '../api/v11.js';
 
 export function configureSupabaseClient(client) {
-  supabaseClient = client;
-  return supabaseClient;
+  return configureClient(client);
 }
 
-export function getSupabaseClient() {
-  if (supabaseClient) return supabaseClient;
-  if (globalThis.SAIBOT_SUPABASE_CLIENT) return globalThis.SAIBOT_SUPABASE_CLIENT;
-
-  const url = globalThis.SAIBOT_SUPABASE_URL;
-  const anonKey = globalThis.SAIBOT_SUPABASE_ANON_KEY;
-  if (url && anonKey && globalThis.supabase?.createClient) {
-    supabaseClient = globalThis.supabase.createClient(url, anonKey);
-    return supabaseClient;
-  }
-
-  throw new Error('Supabase Auth no está configurado. Define SAIBOT_SUPABASE_URL y SAIBOT_SUPABASE_ANON_KEY.');
-}
+export { getSupabaseClient };
 
 export async function login({ email, password }) {
   const client = getSupabaseClient();
@@ -50,4 +37,13 @@ export function detectRole(session) {
   const candidate = metadata.role || metadata.roles?.[0] || user?.role;
   const role = normalizeRole(candidate);
   return Object.values(AUTH_ROLES).includes(role) ? role : null;
+}
+
+export async function detectConfirmedRole(session) {
+  const context = await getMembershipContext({ session });
+  return context.role || null;
+}
+
+export async function getInstitutionContext(session) {
+  return getMembershipContext({ session });
 }
