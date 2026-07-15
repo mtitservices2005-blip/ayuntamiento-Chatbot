@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Citizen Portal V2 Demo</title>
+  </head>
+  <body>
+    <main id="citizen-portal-demo" aria-label="Citizen Portal V2 demo"></main>
+    <script type="module">
+      import { mount } from "./index.js";
+
+      mount(document.querySelector("#citizen-portal-demo"), {
+        municipalityName: "Ayuntamiento de Laguna Salada",
+        institutionalUrl: "../institutional-content/demo.html",
+      });
+    </script>
+  </body>
+</html>

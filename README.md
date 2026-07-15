@@ -16,6 +16,10 @@ MTIT-OS es la base operativa interna de MT IT Services para coordinar desarrollo
 - Cambios en producción, costos, secretos, eliminación de datos y despliegues requieren aprobación humana de Miguel o de la persona que Miguel delegue formalmente.
 - No se usan secretos ni servicios externos sin autorización expresa.
 
+## Acceso público V2
+
+- [Portal Público V2 de Chatbot Municipal](frontend/public-portal/index.html): portada navegable demo para GitHub Pages con accesos a ciudadanía, administración y brigadas.
+
 ## Estructura
 
 - `agents/`: responsabilidades de agentes y roles operativos.
