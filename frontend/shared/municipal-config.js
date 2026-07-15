@@ -125,6 +125,6 @@ export const municipalConfig = {
   futureContracts: {
     whatsappLocationMessage: { type: 'location', latitude: 'number', longitude: 'number', name: 'string | null', address: 'string | null' },
     whatsappEvidenceMessage: { type: 'image | document', mediaId: 'string', caption: 'string | null' },
-    supabaseEvidenceStorage: { bucket: 'ticket-evidence', path: '{institution}/{ticket}/{filename}', uploadPending: true },
+    supabaseEvidenceStorage: { bucket: 'ticket-evidence-v11', path: '<institution_id>/pending/<filename>', uploadPending: true, status: 'BLOCKED_UNTIL_EDGE_FUNCTION' },
   },
 };

@@ -22,7 +22,7 @@ const flowOrder = [
   'function startReport',
   'function selectCategory',
   'function selectSector',
-  'function useDemoGps',
+  'function requestCurrentLocation',
   'function askManualLocation',
   'function askDescription',
   'function askEvidence',
@@ -37,18 +37,23 @@ for (const marker of flowOrder) {
 }
 
 assert.match(app, /quickSectorOptions/);
-assert.match(app, /Otro sector de Laguna Salada/);
+assert.match(app, /Otro sector/);
 assert.match(app, /state\.mode = 'report-sector'/);
 assert.match(app, /state\.mode = 'report-other-sector'/);
-assert.match(app, /web-demo-gps/);
-assert.match(app, /GPS simulada registrada/);
-assert.match(app, /futureWhatsAppLocationMessage/);
+assert.match(app, /Usar mi ubicación actual/);
+assert.match(app, /navigator\.geolocation\.getCurrentPosition/);
+assert.match(app, /Solicitando permiso de ubicación/);
+assert.match(app, /Ubicación obtenida correctamente/);
+assert.match(app, /browser-geolocation/);
 assert.match(app, /state\.mode = 'report-manual-location'/);
 assert.match(app, /manual-address/);
 assert.match(app, /evidence-input/);
 assert.match(html, /type="file"/);
-assert.match(app, /Evidencia demo · no enviada/);
+assert.match(app, /Estado real/);
+assert.match(app, /BLOCKED/);
+assert.match(app, /ticket-evidence-v11/);
 assert.match(app, /Vista previa local/);
+assert.match(app, /validateEvidenceFile/);
 assert.match(app, /Categoría: \$\{state\.report\.category\}/);
 assert.match(app, /Sector: \$\{state\.report\.sector\}/);
 assert.match(app, /Dirección\/GPS: \$\{state\.report\.locationText\}/);
@@ -63,3 +68,11 @@ assert.match(app, /LS-\$\{new Date\(\)\.toISOString/);
 assert.match(contracts, /ticketDraft/);
 assert.match(contracts, /latitude/);
 assert.match(contracts, /evidence/);
+
+const citizens = readFileSync(new URL('../../v1.1/js/citizen.js', import.meta.url), 'utf8');
+const api = readFileSync(new URL('../../v1.1/js/api.js', import.meta.url), 'utf8');
+assert.match(citizens, /requestCurrentLocation/);
+assert.match(citizens, /validateCitizenEvidence/);
+assert.match(api, /ticket-evidence-v11/);
+assert.match(api, /v11_create_citizen_ticket/);
+assert.doesNotMatch(app, /Crear reporte<\/h2>/);
