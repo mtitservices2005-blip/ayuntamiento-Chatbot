@@ -1,10 +1,27 @@
 {
   "id": "master-admin",
-  "name": "Master Admin",
+  "name": "Master Admin V2",
   "surface": "frontend",
   "route": "/master-admin",
-  "owner": "Chatbot Municipal V2",
-  "status": "foundation",
+  "owner": "MT IT Services",
+  "status": "demo",
   "dynamicEntry": "../modules/master-admin/index.js",
-  "permissions": []
+  "permissions": [
+    "mt_superadmin"
+  ],
+  "demoOnly": true,
+  "integrationsPrepared": [
+    "Supabase Auth",
+    "institutions",
+    "memberships",
+    "roles",
+    "RLS",
+    "settings",
+    "audit",
+    "billing",
+    "aggregate_metrics",
+    "Realtime",
+    "SmartWaste",
+    "WhatsApp Business Platform"
+  ]
 }
