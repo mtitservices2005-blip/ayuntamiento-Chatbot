@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Portal público V2 demo para Chatbot Municipal: atención ciudadana, contenido institucional y accesos operativos."
+    />
+    <title>Portal Público V2 | Ayuntamiento de Laguna Salada</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#contenido">Saltar al contenido principal</a>
+
+    <header class="site-header" data-public-portal-header>
+      <nav class="nav" aria-label="Navegación principal">
+        <a
+          class="brand"
+          href="#inicio"
+          aria-label="Inicio del Portal Público V2"
+        >
+          <img
+            src="../../images/logo.png"
+            alt="Logo del Ayuntamiento de Laguna Salada"
+            class="brand__logo"
+          />
+          <span class="brand__text">
+            <strong>Ayuntamiento de Laguna Salada</strong>
+            <small>Portal Público V2 · Datos demo</small>
+          </span>
+        </a>
+
+        <button
+          class="nav__toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="menu-principal"
+        >
+          <span class="nav__toggle-line"></span>
+          <span class="nav__toggle-line"></span>
+          <span class="nav__toggle-line"></span>
+          <span class="sr-only">Abrir menú</span>
+        </button>
+
+        <div class="nav__links" id="menu-principal">
+          <a href="#asistente">Asistente</a>
+          <a href="#municipio">Municipio</a>
+          <a href="#autoridades">Autoridades</a>
+          <a href="#contacto">Contacto</a>
+          <a href="#accesos">Accesos</a>
+        </div>
+      </nav>
+    </header>
+
+    <main id="contenido">
+      <section class="hero" id="inicio" aria-labelledby="hero-title">
+        <div class="hero__content">
+          <p class="eyebrow">Entrada pública para GitHub Pages · Datos demo</p>
+          <h1 id="hero-title">
+            Atención ciudadana y servicios municipales en un solo portal.
+          </h1>
+          <p class="hero__lead">
+            Portada V2 integrada para orientar a residentes, visitantes,
+            personal municipal y brigadas sin duplicar la lógica de los módulos
+            existentes.
+          </p>
+          <div
+            class="hero__actions"
+            aria-label="Acciones ciudadanas principales"
+          >
+            <a
+              class="button button--primary"
+              href="../modules/citizen-portal/demo.html#reportar"
+              >Reportar incidencia</a
+            >
+            <a
+              class="button button--secondary"
+              href="../modules/citizen-portal/demo.html#consultar"
+              >Consultar ticket</a
+            >
+          </div>
+        </div>
+
+        <aside
+          class="assistant-card"
+          id="asistente"
+          aria-labelledby="assistant-title"
+        >
+          <div class="assistant-card__status">● Asistente ciudadano demo</div>
+          <h2 id="assistant-title">Hola, soy tu asistente municipal</h2>
+          <p>
+            Puedo guiarte para reportar una incidencia, consultar un ticket o
+            encontrar información del ayuntamiento.
+          </p>
+          <div class="assistant-card__chips" aria-label="Sugerencias rápidas">
+            <button type="button" data-suggestion="Reportar incidencia">
+              Reportar incidencia
+            </button>
+            <button type="button" data-suggestion="Consultar ticket">
+              Consultar ticket
+            </button>
+            <button type="button" data-suggestion="Horario municipal">
+              Horario municipal
+            </button>
+          </div>
+          <p class="assistant-card__reply" aria-live="polite">
+            Selecciona una opción para ver una orientación demo.
+          </p>
+        </aside>
+      </section>
+
+      <section class="integration-strip" aria-label="Integraciones V2">
+        <article>
+          <span>Citizen Portal V2</span>
+          <a href="../modules/citizen-portal/demo.html"
+            >Abrir módulo ciudadano</a
+          >
+        </article>
+        <article>
+          <span>Institutional Content</span>
+          <a href="../modules/institutional-content/demo.html"
+            >Ver contenido institucional</a
+          >
+        </article>
+        <article>
+          <span>Authentication V2</span>
+          <a href="../auth/login.html">Iniciar sesión</a>
+        </article>
+      </section>
+
+      <section class="section" id="municipio" aria-labelledby="municipio-title">
+        <p class="eyebrow">Conoce tu municipio · Datos demo</p>
+        <h2 id="municipio-title">Conoce tu municipio</h2>
+        <div class="municipio-grid">
+          <article class="card card--wide">
+            <h3>Historia</h3>
+            <p>
+              Laguna Salada se presenta aquí con texto demostrativo para validar
+              la experiencia visual del portal público. La información histórica
+              debe ser confirmada por fuentes oficiales antes de producción.
+            </p>
+          </article>
+          <article class="card place-card">
+            <img
+              src="../../images/palacio-municipal.png"
+              alt="Imagen demo del palacio municipal"
+            />
+            <div>
+              <h3>Lugares emblemáticos</h3>
+              <p>
+                Palacio Municipal y espacios cívicos destacados. Contenido demo
+                para integración con Institutional Content.
+              </p>
+            </div>
+          </article>
+          <article class="card place-card">
+            <img
+              src="../../images/cementerio-municipal.jpeg"
+              alt="Imagen demo de un lugar municipal"
+            />
+            <div>
+              <h3>Patrimonio local</h3>
+              <p>
+                Ficha demo para mostrar lugares, horarios o reseñas
+                institucionales verificables.
+              </p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section
+        class="section section--muted"
+        id="autoridades"
+        aria-labelledby="autoridades-title"
+      >
+        <p class="eyebrow">Autoridades municipales · Datos demo</p>
+        <h2 id="autoridades-title">Gobierno municipal</h2>
+        <div class="authority-grid">
+          <article class="card authority-card">
+            <span class="avatar" aria-hidden="true">A</span>
+            <h3>Alcalde</h3>
+            <p>Nombre demo pendiente de confirmación oficial.</p>
+          </article>
+          <article class="card authority-card">
+            <span class="avatar" aria-hidden="true">V</span>
+            <h3>Vicealcaldesa</h3>
+            <p>Nombre demo pendiente de confirmación oficial.</p>
+          </article>
+          <article class="card authority-card">
+            <span class="avatar" aria-hidden="true">C</span>
+            <h3>Concejo municipal</h3>
+            <p>
+              Listado demo de regidores y comisiones para futura carga
+              institucional.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="contacto" aria-labelledby="contacto-title">
+        <p class="eyebrow">Atención municipal · Datos demo</p>
+        <h2 id="contacto-title">Contactos y horario</h2>
+        <div class="contact-grid">
+          <article class="card">
+            <h3>Horario de atención</h3>
+            <p>Lunes a viernes · 8:00 a. m. a 4:00 p. m. (demo)</p>
+          </article>
+          <article class="card">
+            <h3>Teléfono</h3>
+            <p>+1 (000) 000-0000 · dato demo</p>
+          </article>
+          <article class="card">
+            <h3>Correo</h3>
+            <p>contacto-demo@ayuntamiento.local</p>
+          </article>
+        </div>
+      </section>
+
+      <section
+        class="section access-section"
+        id="accesos"
+        aria-labelledby="accesos-title"
+      >
+        <p class="eyebrow">Operación interna · Accesos demo</p>
+        <h2 id="accesos-title">Accesos administrativos y brigadas</h2>
+        <div class="access-grid">
+          <a class="access-card" href="../auth/login.html?next=municipal-panel">
+            <strong>Acceso administrativo</strong>
+            <span>Autenticación V2 para perfiles municipales.</span>
+          </a>
+          <a class="access-card" href="../modules/municipal-panel/demo.html">
+            <strong>Municipal Panel</strong>
+            <span>Seguimiento operativo de tickets y métricas demo.</span>
+          </a>
+          <a class="access-card" href="../modules/brigade-portal/demo.html">
+            <strong>Acceso de brigadas</strong>
+            <span>Portal de brigadas para gestión de órdenes demo.</span>
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>
+        Portal Público V2 para Chatbot Municipal · Todos los datos no oficiales
+        están marcados como demo.
+      </p>
+      <a href="../../index.html">Volver al chatbot V1</a>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
