@@ -8,6 +8,7 @@ const DEMO_FLAG = 'Datos demo · no producción';
 const demoTickets = [
   {
     folio: 'CM-DEMO-2026-0108',
+    caseType: 'Incidencia',
     category: 'Alumbrado público',
     location: 'Av. Hidalgo y Calle 5, Centro',
     date: '2026-07-14 08:45 UTC',
@@ -24,6 +25,7 @@ const demoTickets = [
   },
   {
     folio: 'CM-DEMO-2026-0107',
+    caseType: 'Incidencia',
     category: 'Bacheo y vialidades',
     location: 'Blvd. Municipal, Col. Las Flores',
     date: '2026-07-14 07:20 UTC',
@@ -41,6 +43,7 @@ const demoTickets = [
   },
   {
     folio: 'CM-DEMO-2026-0106',
+    caseType: 'Incidencia',
     category: 'Recolección de residuos',
     location: 'Parque Lineal, Zona Norte',
     date: '2026-07-13 18:10 UTC',
@@ -59,6 +62,7 @@ const demoTickets = [
   },
   {
     folio: 'CM-DEMO-2026-0105',
+    caseType: 'Incidencia',
     category: 'Agua y drenaje',
     location: 'Calle Morelos 224, Barrio Sur',
     date: '2026-07-13 12:35 UTC',
@@ -73,6 +77,23 @@ const demoTickets = [
       ['Brigada en sitio', 'Agua 01 inició reparación.'],
       ['Ticket cerrado', 'Supervisor validó evidencia demo.'],
     ],
+  },
+  {
+    folio: 'SOL-2026-00142',
+    caseType: 'Solicitud de servicio',
+    category: '📄 Certificaciones y documentos',
+    subtype: 'Certificación municipal',
+    department: 'Secretaría Municipal',
+    location: 'No aplica',
+    date: '2026-07-14 10:15 UTC',
+    priority: 'Normal',
+    status: 'Resuelta',
+    brigade: 'Departamento administrativo · no requiere brigada obligatoria',
+    responsible: 'Secretaría Municipal demo',
+    description: 'Documento listo para retiro según configuración municipal DEMO_ONLY.',
+    evidence: [],
+    coordinates: { top: 52, left: 52 },
+    timeline: [['Solicitud recibida', 'Folio SOL- creado.'], ['Asignada', 'Asignada a departamento administrativo.'], ['Resuelta', 'Documento listo para retiro.']],
   },
 ];
 
@@ -158,7 +179,7 @@ function renderPanel(context) {
         <section class="mp-panel" id="tickets" aria-labelledby="tickets-title">
           <div class="mp-section-head"><div><span class="mp-badge">Gestión de tickets</span><h2 id="tickets-title">Bandeja operativa</h2><p>Todos los folios visibles son simulados para demostración.</p></div><select data-role-select aria-label="Cambiar rol demo"><option value="municipal_admin">municipal_admin</option><option value="supervisor">supervisor</option></select></div>
           <div class="mp-filters"><input data-search placeholder="Buscar folio, ubicación o brigada" aria-label="Buscar tickets"><select data-filter="status"><option value="">Estado: todos</option>${uniqueOptions('status')}</select><select data-filter="priority"><option value="">Prioridad: todas</option>${uniqueOptions('priority')}</select><select data-filter="category"><option value="">Categoría: todas</option>${uniqueOptions('category')}</select></div>
-          <div class="mp-table-wrap"><table class="mp-table"><thead><tr><th>Folio</th><th>Categoría</th><th>Ubicación</th><th>Fecha</th><th>Prioridad</th><th>Estado</th><th>Brigada asignada</th><th>Acción</th></tr></thead><tbody data-ticket-rows>${renderTicketRows(demoTickets)}</tbody></table></div>
+          <div class="mp-table-wrap"><table class="mp-table"><thead><tr><th>Tipo de caso</th><th>Folio</th><th>Categoría</th><th>Ubicación</th><th>Fecha</th><th>Prioridad</th><th>Estado</th><th>Brigada asignada</th><th>Acción</th></tr></thead><tbody data-ticket-rows>${renderTicketRows(demoTickets)}</tbody></table></div>
         </section>
 
 
@@ -181,14 +202,14 @@ function uniqueOptions(key) {
 }
 
 function renderTicketRows(tickets) {
-  return tickets.map(ticket => `<tr data-ticket-row data-ticket="${ticket.folio}" data-status="${ticket.status}" data-priority="${ticket.priority}" data-category="${ticket.category}"><td data-label="Folio"><strong>${ticket.folio}</strong><small>${DEMO_FLAG}</small></td><td data-label="Categoría">${ticket.category}</td><td data-label="Ubicación">${ticket.location}</td><td data-label="Fecha">${ticket.date}</td><td data-label="Prioridad"><span class="mp-chip ${priorityClass(ticket.priority)}">${ticket.priority}</span></td><td data-label="Estado"><span class="mp-chip">${ticket.status}</span></td><td data-label="Brigada">${ticket.brigade}</td><td data-label="Acción"><button class="mp-action" data-view-ticket="${ticket.folio}" type="button">Ver detalle</button></td></tr>`).join('');
+  return tickets.map(ticket => `<tr data-ticket-row data-ticket="${ticket.folio}" data-status="${ticket.status}" data-priority="${ticket.priority}" data-category="${ticket.category}"><td data-label="Tipo de caso">${ticket.caseType || 'Incidencia'}</td><td data-label="Folio"><strong>${ticket.folio}</strong><small>${DEMO_FLAG}</small></td><td data-label="Categoría">${ticket.category}</td><td data-label="Ubicación">${ticket.location}</td><td data-label="Fecha">${ticket.date}</td><td data-label="Prioridad"><span class="mp-chip ${priorityClass(ticket.priority)}">${ticket.priority}</span></td><td data-label="Estado"><span class="mp-chip">${ticket.status}</span></td><td data-label="Brigada">${ticket.brigade}</td><td data-label="Acción"><button class="mp-action" data-view-ticket="${ticket.folio}" type="button">Ver detalle</button></td></tr>`).join('');
 }
 
 function renderTicketDetail(ticket, role) {
-  const adminActions = ['Asignar brigada', 'Cambiar prioridad', 'Solicitar evidencia', 'Cerrar ticket demo'];
+  const adminActions = ['Distinguir incidencia/solicitud', 'Asignar brigada o departamento', 'Cambiar prioridad', 'Solicitar evidencia', 'Cerrar ticket demo'];
   const supervisorActions = ['Verificar resolución', 'Reabrir ticket demo', 'Solicitar corrección'];
   const actions = role === 'supervisor' ? supervisorActions : adminActions;
-  return `<span class="mp-badge">Detalle de ticket · ${DEMO_FLAG}</span><h2>${ticket.folio}</h2><p>${ticket.description}</p><dl class="mp-detail-list"><div><dt>Categoría</dt><dd>${ticket.category}</dd></div><div><dt>Ubicación</dt><dd>${ticket.location}</dd></div><div><dt>Fecha</dt><dd>${ticket.date}</dd></div><div><dt>Prioridad</dt><dd>${ticket.priority}</dd></div><div><dt>Estado actual</dt><dd>${ticket.status}</dd></div><div><dt>Brigada asignada</dt><dd>${ticket.brigade}</dd></div></dl><h3>Evidencias demo</h3><div class="mp-evidence">${ticket.evidence.map((item, index) => `<div><span aria-hidden="true">▧</span><strong>${item}</strong><small>Archivo simulado ${index + 1}</small></div>`).join('')}</div><h3>Timeline de cambios</h3><ol class="mp-ticket-timeline">${ticket.timeline.map(([title, detail]) => `<li><strong>${title}</strong><span>${detail}</span></li>`).join('')}</ol><h3>Acciones visuales para ${role}</h3><div class="mp-actions">${actions.map(action => `<button type="button">${action}</button>`).join('')}</div>`;
+  return `<span class="mp-badge">Detalle de caso · ${DEMO_FLAG}</span><h2>${ticket.folio}</h2><p>${ticket.description}</p><dl class="mp-detail-list"><div><dt>Tipo de caso</dt><dd>${ticket.caseType || 'Incidencia'}</dd></div><div><dt>Categoría</dt><dd>${ticket.category}</dd></div><div><dt>Subtipo</dt><dd>${ticket.subtype || 'No aplica'}</dd></div><div><dt>Departamento</dt><dd>${ticket.department || 'Operaciones municipales'}</dd></div><div><dt>Ubicación</dt><dd>${ticket.location}</dd></div><div><dt>Fecha</dt><dd>${ticket.date}</dd></div><div><dt>Prioridad</dt><dd>${ticket.priority}</dd></div><div><dt>Estado actual</dt><dd>${ticket.status}</dd></div><div><dt>Responsable</dt><dd>${ticket.responsible || ticket.brigade}</dd></div><div><dt>Brigada asignada</dt><dd>${ticket.brigade}</dd></div></dl><h3>Evidencias demo</h3><div class="mp-evidence">${ticket.evidence.length ? ticket.evidence.map((item, index) => `<div><span aria-hidden="true">▧</span><strong>${item}</strong><small>Archivo simulado ${index + 1}</small></div>`).join('') : '<p>No aplica o no requerida para este tipo de solicitud.</p>'}</div><h3>Timeline de cambios</h3><ol class="mp-ticket-timeline">${ticket.timeline.map(([title, detail]) => `<li><strong>${title}</strong><span>${detail}</span></li>`).join('')}</ol><h3>Acciones visuales para ${role}</h3><div class="mp-actions">${actions.map(action => `<button type="button">${action}</button>`).join('')}</div>`;
 }
 
 function renderBrigade(brigade) {
