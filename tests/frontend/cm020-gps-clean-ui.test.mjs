@@ -10,7 +10,7 @@ const contracts = readFileSync(new URL('../../frontend/shared/contracts/channel-
 
 const mainMenuBlock = app.slice(app.indexOf('function defaultWelcome'), app.indexOf('function knowMunicipalityMenu'));
 const mainMenuLabels = [...mainMenuBlock.matchAll(/\['([^']+)', conversationIntents\./g)].map((match) => match[1].replace(/^[^A-Za-zÁÉÍÓÚÑáéíóúñ]+\s*/, ''));
-assert.deepEqual(mainMenuLabels, ['Reportar una incidencia', 'Consultar mi reporte', 'Conoce tu municipio', 'Contactos y horarios']);
+assert.deepEqual(mainMenuLabels, ['Reportar una incidencia', 'Solicitar un servicio municipal', 'Consultar mi reporte o solicitud', 'Conoce tu municipio', 'Contactos y horarios']);
 
 const submenuBlock = app.slice(app.indexOf('function knowMunicipalityMenu'), app.indexOf('function bot'));
 for (const label of ['Historia del municipio', 'Lugares emblemáticos', 'Conoce a tu alcalde', 'Conoce a tu vicealcaldesa', 'Concejo municipal', 'Volver al menú principal']) {

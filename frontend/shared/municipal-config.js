@@ -143,6 +143,38 @@ export const municipalConfig = {
     address: '[PENDIENTE: dirección oficial]',
     openingHours: '[PENDIENTE: horarios oficiales]',
   },
+
+  serviceDesk: {
+    folioPrefix: 'SOL-',
+    statuses: ['Recibida', 'Asignada', 'En proceso', 'En revisión', 'Resuelta', 'Cerrada'],
+    exceptionalStatuses: ['Cancelada', 'Rechazada'],
+    citizenClosure: {
+      resolvedPrompt: '¿Confirmas que el servicio fue realizado satisfactoriamente?',
+      confirmLabel: '👍 Sí, confirmar y cerrar',
+      reviewLabel: '⚠️ No, necesito revisión',
+      reviewTransition: 'Mantener trazabilidad y devolver a En revisión',
+    },
+    certificationPickup: {
+      place: '[PENDIENTE: lugar oficial de retiro]',
+      hours: '[PENDIENTE: horario oficial de retiro]',
+      requirements: ['[PENDIENTE: requisitos oficiales para retirar]'],
+    },
+    notifications: {
+      Recibida: '✅ Hemos recibido tu solicitud {{folio}}.',
+      Asignada: '👷 Tu solicitud fue asignada al área responsable.',
+      'En proceso': '🔧 Ya estamos trabajando en tu solicitud.',
+      'En revisión': '🔎 El trabajo o trámite está siendo revisado.',
+      ResueltaServicio: '✅ Tu solicitud ha sido atendida.',
+      ResueltaCertificacion: '📄 Tu documento está listo para retiro.',
+    },
+    services: [
+      { id: 'limpieza-ornato', label: '🧹 Limpieza y ornato', department: 'Limpieza y Ornato', assignmentTarget: 'brigade', requiresSector: true, requiresLocation: true, evidence: 'optional', flow: 'operational-description', subtypes: ['Retiro de escombros', 'Recogida especial', 'Limpieza de espacio público'] },
+      { id: 'poda-areas-verdes', label: '🌳 Poda y áreas verdes', department: 'Ornato y Áreas Verdes', assignmentTarget: 'brigade', requiresSector: true, requiresLocation: true, evidence: 'recommended', flow: 'operational-description', subtypes: ['Poda de árbol', 'Árbol peligroso', 'Mantenimiento de área verde'] },
+      { id: 'alumbrado-publico', label: '💡 Alumbrado público', department: 'Alumbrado Público', assignmentTarget: 'brigade', requiresSector: true, requiresLocation: true, evidence: 'optional', flow: 'lighting-reference', subtypes: ['Luminaria averiada', 'Zona oscura', 'Evaluación de iluminación'] },
+      { id: 'certificaciones-documentos', label: '📄 Certificaciones y documentos', department: 'Secretaría Municipal', assignmentTarget: 'administrative_department', requiresSector: false, requiresLocation: false, evidence: 'not_required', flow: 'certification', subtypes: ['Certificación municipal', 'Constancia municipal', 'Otro documento disponible'], requirementsPrompt: 'Indica la información o requisitos disponibles para el documento solicitado.' },
+      { id: 'espacios-servicios-municipales', label: '🏛️ Uso de espacios y servicios municipales', department: 'Servicios Municipales', assignmentTarget: 'administrative_department', requiresSector: false, requiresLocation: false, evidence: 'not_required', flow: 'space-use', subtypes: ['Solicitud de parque o plaza', 'Instalación municipal', 'Actividad comunitaria'] },
+    ],
+  },
   reportCategories: [
     { id: 'trash', label: '🗑️ Basura acumulada', requiresEvidence: true },
     { id: 'light', label: '💡 Luminaria dañada', requiresEvidence: true },

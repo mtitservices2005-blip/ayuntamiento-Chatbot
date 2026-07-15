@@ -1,6 +1,7 @@
 export const conversationIntents = {
   MAIN_MENU: 'main_menu',
   REPORT_INCIDENT: 'report_incident',
+  REQUEST_MUNICIPAL_SERVICE: 'request_municipal_service',
   LOOKUP_TICKET: 'lookup_ticket',
   KNOW_MUNICIPALITY: 'know_municipality',
   MUNICIPAL_HISTORY: 'municipal_history',

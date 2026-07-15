@@ -10,13 +10,16 @@ const municipalStatisticsPanel = document.querySelector('#municipal-statistics-p
 const input = document.querySelector('#message-input');
 const send = document.querySelector('#send-button');
 const evidenceInput = document.querySelector('#evidence-input');
-const state = { mode: 'menu', report: {}, ticket: null, institution: null, integrationMode: 'DEMO' };
+const state = { mode: 'menu', report: {}, serviceRequest: {}, ticket: null, institution: null, integrationMode: 'DEMO' };
 const content = municipalConfig.institutionalContent;
 
 const isPublished = (item) => item?.status === contentStatuses.PUBLISHED;
 const pendingText = (label) => `[PENDIENTE: ${label} oficial validado por el Ayuntamiento]`;
 const PENDING_VALIDATION = 'Pendiente';
 const quickSectorOptions = [...municipalConfig.sectors, 'Otro sector'];
+const serviceDeskConfig = municipalConfig.serviceDesk;
+const serviceStatusCycle = serviceDeskConfig.statuses;
+const serviceExceptionalStatuses = serviceDeskConfig.exceptionalStatuses;
 
 const legacyCategoryLabel = (category) => typeof category === 'string' ? category : category.label;
 
@@ -155,7 +158,8 @@ function defaultWelcome() {
   bot(`👋 ¡Hola! Soy el asistente virtual de ${municipalConfig.municipality.name}.\n\nEsta demo V1.1 conserva el flujo conversacional ciudadano pensado para WhatsApp.\n\n¿En qué puedo ayudarte hoy?`);
   quickReplies([
     ['🚨 Reportar una incidencia', conversationIntents.REPORT_INCIDENT],
-    ['🎫 Consultar mi reporte', conversationIntents.LOOKUP_TICKET],
+    ['🏛️ Solicitar un servicio municipal', conversationIntents.REQUEST_MUNICIPAL_SERVICE],
+    ['🎫 Consultar mi reporte o solicitud', conversationIntents.LOOKUP_TICKET],
     ['🏛️ Conoce tu municipio', conversationIntents.KNOW_MUNICIPALITY],
     ['📞 Contactos y horarios', conversationIntents.CONTACTS_AND_HOURS],
   ]);
@@ -221,10 +225,13 @@ function handlePayload(payload, label) {
   if (payload.startsWith('landmark:')) return showLandmarkDetail(payload.replace('landmark:', ''));
   if (payload === conversationIntents.CONTACTS_AND_HOURS) return showContacts();
   if (payload === conversationIntents.REPORT_INCIDENT) return startReport();
+  if (payload === conversationIntents.REQUEST_MUNICIPAL_SERVICE) return startServiceRequest();
   if (payload === conversationIntents.LOOKUP_TICKET) return startTicketLookup();
   if (payload.startsWith('category:')) return selectCategory(payload.replace('category:', ''));
   if (payload === 'sector:other') return askOtherSector();
   if (payload.startsWith('sector:')) return selectSector(payload.replace('sector:', ''));
+  if (payload === 'service-sector:other') return askOtherServiceSector();
+  if (payload.startsWith('service-sector:')) return selectServiceSector(payload.replace('service-sector:', ''));
   if (payload === 'location:gps') return requestCurrentLocation();
   if (payload === 'location:manual') return askManualLocation();
   if (payload === 'location:omit') return omitLocation();
@@ -232,6 +239,16 @@ function handlePayload(payload, label) {
   if (payload === 'evidence:skip') return skipEvidence();
   if (payload === 'report:confirm') return confirmReport();
   if (payload === 'report:correct') return startReportCorrection();
+  if (payload.startsWith('service:')) return selectMunicipalService(payload.replace('service:', ''));
+  if (payload.startsWith('service-subtype:')) return selectServiceSubtype(payload.replace('service-subtype:', ''));
+  if (payload === 'service-location:gps') return requestServiceCurrentLocation();
+  if (payload === 'service-location:manual') return askServiceManualLocation();
+  if (payload === 'service-evidence:add') return requestEvidenceFile();
+  if (payload === 'service-evidence:skip') return showServiceSummary();
+  if (payload === 'service:confirm') return confirmServiceRequest();
+  if (payload === 'service:correct') return startServiceRequest();
+  if (payload === 'service-close:confirm') return closeResolvedService();
+  if (payload === 'service-close:review') return reopenServiceForReview();
 }
 
 function showHistory() {
@@ -280,6 +297,55 @@ Ubicación o referencia: ${place.location || 'Información pendiente de validaci
   quickReplies([['📸 Volver al listado de lugares', conversationIntents.LANDMARKS], ['🏛️ Volver a Conoce tu municipio', conversationIntents.KNOW_MUNICIPALITY], ['🏠 Menú principal', conversationIntents.MAIN_MENU]]);
 }
 function showContacts() { const c = municipalConfig.contacts; bot(`📞 ${c.title}\n\nTeléfono: ${c.phone}\nCorreo: ${c.email}\nDirección: ${c.address}\nHorario: ${c.openingHours}`); backMenu(); }
+
+
+function newServiceRequestDraft() {
+  return { caseType: 'Solicitud de servicio', folioPrefix: serviceDeskConfig.folioPrefix, municipality: municipalConfig.municipality.shortName, serviceId: '', category: '', subtype: '', citizenContact: '', sector: '', locationText: '', latitude: null, longitude: null, locationSource: '', description: '', evidence: null, evidenceValidation: null, department: '', assignmentTarget: '', priority: 'Normal', status: serviceStatusCycle[0], timestamps: { createdAt: null, updatedAt: null, assignedAt: null, resolvedAt: null, closedAt: null }, history: [], tracking: '', details: {} };
+}
+function getSelectedService() { return serviceDeskConfig.services.find((service) => service.id === state.serviceRequest.serviceId); }
+function startServiceRequest() {
+  state.mode = 'service-category';
+  state.serviceRequest = newServiceRequestDraft();
+  bot(`🏛️ Solicitar un servicio municipal. Selecciona el servicio disponible para ${municipalConfig.municipality.shortName}:`);
+  quickReplies(serviceDeskConfig.services.map((service) => [service.label, `service:${service.id}`]));
+}
+function selectMunicipalService(serviceId) {
+  const service = serviceDeskConfig.services.find((item) => item.id === serviceId);
+  if (!service) return startServiceRequest();
+  Object.assign(state.serviceRequest, { serviceId: service.id, category: service.label, department: service.department, assignmentTarget: service.assignmentTarget });
+  state.mode = 'service-subtype';
+  const subtypeLabel = service.flow === 'certification' ? 'tipo de documento' : service.flow === 'space-use' ? 'espacio o servicio solicitado' : 'subtipo';
+  bot(`Selecciona el ${subtypeLabel} para ${service.label}:`);
+  quickReplies(service.subtypes.map((subtype) => [`${subtype}`, `service-subtype:${subtype}`]));
+}
+function selectServiceSubtype(subtype) {
+  state.serviceRequest.subtype = subtype;
+  const service = getSelectedService();
+  if (service.flow === 'certification') return askCertificationApplicantData();
+  if (service.flow === 'space-use') return askSpaceUseDate();
+  state.mode = 'service-sector';
+  bot('📍 Selecciona el sector o barrio donde se requiere el servicio.');
+  quickReplies(quickSectorOptions.map((sector) => [sector === 'Otro sector' ? '➕ Otro sector' : `📍 ${sector}`, sector === 'Otro sector' ? 'service-sector:other' : `service-sector:${sector}`]));
+}
+function selectServiceSector(sector) { state.serviceRequest.sector = sector; askServiceLocationChoice(); }
+function askOtherServiceSector() { state.mode = 'service-other-sector'; bot(`✍️ Escribe el sector o barrio de ${municipalConfig.municipality.shortName}.`); }
+function askServiceLocationChoice() { state.mode = 'service-location-choice'; bot('📌 Indica la ubicación del servicio: GPS o dirección/referencia.'); quickReplies([['📍 Usar mi ubicación actual', 'service-location:gps'], ['✍️ Escribir dirección o referencia', 'service-location:manual']]); }
+function requestServiceCurrentLocation() { state.mode = 'service-location-choice'; state.serviceRequest.locationText = municipalConfig.reportPolicy.demoGps?.label || 'Ubicación GPS proporcionada'; state.serviceRequest.locationSource = 'gps_or_demo'; askServiceDetails(); }
+function askServiceManualLocation() { state.mode = 'service-manual-location'; bot('✍️ Escribe dirección, calle o referencia del lugar.'); }
+function askServiceDetails() { const service = getSelectedService(); state.mode = service.flow === 'lighting-reference' ? 'service-lighting-reference' : 'service-description'; bot(service.flow === 'lighting-reference' ? '💡 Escribe la referencia del poste o lugar.' : '📝 Describe brevemente el servicio solicitado.'); }
+function askCertificationApplicantData() { state.mode = 'service-cert-applicant'; bot('📄 Escribe los datos del solicitante para el documento. No se solicitará GPS ni fotografía obligatoria.'); }
+function askCertificationRequirements() { state.mode = 'service-cert-requirements'; bot(getSelectedService().requirementsPrompt); }
+function askSpaceUseDate() { state.mode = 'service-space-date'; bot('📅 Indica la fecha solicitada para el espacio o servicio municipal.'); }
+function askSpaceUseTime() { state.mode = 'service-space-time'; bot('🕒 Indica el horario solicitado.'); }
+function askSpaceUsePurpose() { state.mode = 'service-space-purpose'; bot('🎯 Indica el propósito de la actividad.'); }
+function askSpaceUsePeople() { state.mode = 'service-space-people'; bot('👥 Indica la cantidad estimada de personas.'); }
+function askServiceContact() { state.mode = 'service-contact'; bot('☎️ Escribe un contacto para seguimiento de la solicitud.'); }
+function askServiceEvidence() { const service = getSelectedService(); if (service.evidence === 'not_required') return askServiceContact(); state.mode = 'service-evidence'; bot(`📷 Evidencia ${service.evidence === 'recommended' ? 'recomendada' : 'opcional'} para esta solicitud. No es obligatoria para continuar.`); quickReplies([['📎 Seleccionar fotografía', 'service-evidence:add'], ['Continuar sin evidencia', 'service-evidence:skip']]); }
+function showServiceSummary() { const r = state.serviceRequest; state.mode = 'service-confirmation'; bot(`✅ Revisa tu solicitud antes de generar el folio ${serviceDeskConfig.folioPrefix}:\n\nTipo de caso: Solicitud de servicio\nServicio: ${r.category}\nSubtipo: ${r.subtype}\nDepartamento: ${r.department}\nSector: ${r.sector || 'No aplica'}\nUbicación: ${r.locationText || 'No aplica'}\nDetalles: ${r.description || JSON.stringify(r.details)}\nContacto: ${r.citizenContact}\nEvidencia: ${r.evidence?.name || 'No requerida/seleccionada'}\nEstado inicial: ${r.status}`); quickReplies([['✅ Confirmar solicitud', 'service:confirm'], ['✏️ Corregir información', 'service:correct']]); }
+function confirmServiceRequest() { const now = new Date().toISOString(); const folio = `${serviceDeskConfig.folioPrefix}${new Date().getFullYear()}-${String(Math.floor(Math.random() * 90000) + 10000)}`; const tracking = crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`; Object.assign(state.serviceRequest, { folio, tracking, timestamps: { ...state.serviceRequest.timestamps, createdAt: now, updatedAt: now }, history: [{ status: 'Recibida', at: now, by: 'chatbot', note: 'Solicitud recibida' }] }); bot(`${serviceDeskConfig.notifications.Recibida.replace('{{folio}}', folio)}\n\nCódigo de seguimiento: ${tracking}\nEstado: Recibida\nDepartamento responsable: ${state.serviceRequest.department}`); serviceActions(); }
+function serviceActions() { quickReplies([['🏠 Menú principal', conversationIntents.MAIN_MENU], ['🎫 Consultar mi reporte o solicitud', conversationIntents.LOOKUP_TICKET]]); }
+function closeResolvedService() { bot('✅ Solicitud cerrada con confirmación ciudadana. Estado: Cerrada.'); backMenu(); }
+function reopenServiceForReview() { bot('🔎 Mantendremos la trazabilidad y devolveremos la solicitud a En revisión para validar lo pendiente.'); backMenu(); }
 
 function startReport() {
   state.mode = 'report-category';
@@ -366,9 +432,9 @@ async function confirmReport() {
   ticketActions();
 }
 function startReportCorrection() { bot('✏️ Corregiremos el reporte desde el inicio para evitar datos inconsistentes.'); startReport(); }
-function startTicketLookup() { state.mode = 'ticket-lookup'; bot('🎫 Escribe tu número de ticket para consultar el estado.\n\nEjemplo demo: LS-260715-0001'); }
+function startTicketLookup() { state.mode = 'ticket-lookup'; bot('🎫 Escribe tu folio de incidencia o solicitud para consultar el estado.\n\nEjemplos demo: LS-260715-0001 o SOL-2026-00142'); }
 function backMenu() { quickReplies([['🏠 Menú principal', conversationIntents.MAIN_MENU]]); }
-function ticketActions() { quickReplies([['🏠 Menú principal', conversationIntents.MAIN_MENU], ['🎫 Consultar mi reporte', conversationIntents.LOOKUP_TICKET]]); }
+function ticketActions() { quickReplies([['🏠 Menú principal', conversationIntents.MAIN_MENU], ['🎫 Consultar mi reporte o solicitud', conversationIntents.LOOKUP_TICKET]]); }
 function municipalityBackMenu() { quickReplies([['🏛️ Volver a Conoce tu municipio', conversationIntents.KNOW_MUNICIPALITY], ['🏠 Menú principal', conversationIntents.MAIN_MENU]]); }
 
 function handleText() {
@@ -378,9 +444,19 @@ function handleText() {
   closeMunicipalStatistics();
   user(text);
   if (state.mode === 'report-other-sector') { return selectSector(text); }
+  if (state.mode === 'service-other-sector') { return selectServiceSector(text); }
+  if (state.mode === 'service-manual-location') { state.serviceRequest.locationText = text; state.serviceRequest.locationSource = 'manual-address'; return askServiceDetails(); }
+  if (state.mode === 'service-description' || state.mode === 'service-lighting-reference') { state.serviceRequest.description = text; return askServiceEvidence(); }
+  if (state.mode === 'service-cert-applicant') { state.serviceRequest.details.applicant = text; return askCertificationRequirements(); }
+  if (state.mode === 'service-cert-requirements') { state.serviceRequest.description = text; return askServiceContact(); }
+  if (state.mode === 'service-space-date') { state.serviceRequest.details.date = text; return askSpaceUseTime(); }
+  if (state.mode === 'service-space-time') { state.serviceRequest.details.time = text; return askSpaceUsePurpose(); }
+  if (state.mode === 'service-space-purpose') { state.serviceRequest.details.purpose = text; return askSpaceUsePeople(); }
+  if (state.mode === 'service-space-people') { state.serviceRequest.details.people = text; return askServiceContact(); }
+  if (state.mode === 'service-contact') { state.serviceRequest.citizenContact = text; return showServiceSummary(); }
   if (state.mode === 'report-manual-location') { state.report.locationText = text; state.report.locationSource = 'manual-address'; return askDescription(); }
   if (state.mode === 'report-description') { state.report.description = text; return askEvidence(); }
-  if (state.mode === 'ticket-lookup') { state.mode = 'menu'; bot(`🔎 Resultado demo para ${text.toUpperCase()}\n\nEstado: 🟡 Recibido\nCanal: Conversacional V1.1\nNota: la consulta real se conectará al backend sin depender del canal WhatsApp o web.`); backMenu(); return; }
+  if (state.mode === 'ticket-lookup') { state.mode = 'menu'; bot(`🔎 Resultado demo para ${text.toUpperCase()}\n\nTipo de caso: ${text.toUpperCase().startsWith('SOL-') ? 'Solicitud de servicio' : 'Incidencia'}\nFolio: ${text.toUpperCase()}\nServicio/incidencia: Demo configurable\nEstado actual: 🟡 Recibido\nÚltima actualización: DEMO_ONLY\nSiguiente paso: seguimiento municipal según estado\nCanal: Conversacional V1.1\nNota: la consulta real se conectará al backend sin depender del canal WhatsApp o web.`); backMenu(); return; }
   bot('🤖 Puedo ayudarte desde el menú principal con reportes, consulta de reportes, Conoce tu municipio, contactos y horarios.');
   backMenu();
 }
@@ -390,6 +466,7 @@ function handleEvidenceSelection(event) {
   if (!file) return;
   const validation = validateEvidenceFile(file);
   const previewUrl = file.type?.startsWith('image/') ? URL.createObjectURL(file) : '';
+  if (state.mode === 'service-evidence') { state.serviceRequest.evidence = { name: file.name, type: file.type || 'application/octet-stream', size: file.size, previewUrl }; state.serviceRequest.evidenceValidation = validation; bot('📸 Evidencia seleccionada para la solicitud; no fue enviada en este entorno.'); return showServiceSummary(); }
   state.report.evidence = { name: file.name, type: file.type || 'application/octet-stream', size: file.size, previewUrl };
   state.report.evidenceValidation = validation;
   bot(`📸 La fotografía fue seleccionada, pero el envío de evidencia aún no está disponible en este entorno.`);

@@ -3,7 +3,7 @@ export const ECONOMIC_DEMO_NOTICE = 'Estimación demo · requiere datos reales d
 export const SCENARIO_DEMO_NOTICE = 'Escenario simulado para demostración';
 
 export const impactFutureContract = {
-  preparedForBackend: ['tickets agregados por período', 'categorías', 'sectores', 'estados', 'brigadas', 'timestamps de respuesta/asignación/resolución', 'banderas GPS/evidencia/descripción'],
+  preparedForBackend: ['incidencias recibidas', 'solicitudes de servicios recibidas', 'solicitudes por categoría', 'solicitudes por departamento', 'tasa de resolución', 'tiempo promedio de respuesta', 'solicitudes pendientes por antigüedad', 'porcentaje resuelto sin visita presencial', 'documentos listos para retiro', 'servicios confirmados satisfactoriamente', 'solicitudes reabiertas o enviadas a revisión', 'tickets agregados por período', 'categorías', 'sectores', 'estados', 'brigadas', 'timestamps de respuesta/asignación/resolución', 'banderas GPS/evidencia/descripción'],
   demoOnly: ['satisfacción ciudadana demo', 'duplicados detectados demo', 'interacciones automatizadas estimadas', 'ciudadanos recurrentes cuando el contrato futuro lo permita'],
   blocked: ['ciudadanos recurrentes reales: requiere identidad ciudadana o contrato analítico confirmado', 'satisfacción real: requiere encuesta/post-atención confirmada', 'ahorro real: requiere costos administrativos validados por el ayuntamiento'],
 };

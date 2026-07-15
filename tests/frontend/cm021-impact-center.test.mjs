@@ -9,7 +9,7 @@ const impactDataSource = readFileSync(new URL('../../frontend/modules/municipal-
 
 const mainMenuBlock = citizenApp.slice(citizenApp.indexOf('function defaultWelcome'), citizenApp.indexOf('function knowMunicipalityMenu'));
 const mainMenuLabels = [...mainMenuBlock.matchAll(/\['([^']+)', conversationIntents\./g)].map((match) => match[1].replace(/^[^A-Za-zÁÉÍÓÚÑáéíóúñ]+\s*/, ''));
-assert.deepEqual(mainMenuLabels, ['Reportar una incidencia', 'Consultar mi reporte', 'Conoce tu municipio', 'Contactos y horarios']);
+assert.deepEqual(mainMenuLabels, ['Reportar una incidencia', 'Solicitar un servicio municipal', 'Consultar mi reporte o solicitud', 'Conoce tu municipio', 'Contactos y horarios']);
 
 const submenuBlock = citizenApp.slice(citizenApp.indexOf('function knowMunicipalityMenu'), citizenApp.indexOf('function bot'));
 assert.deepEqual(['Historia del municipio', 'Lugares emblemáticos', 'Conoce a tu alcalde', 'Conoce a tu vicealcaldesa', 'Concejo municipal', 'Volver al menú principal'].map((label) => submenuBlock.includes(label)), [true, true, true, true, true, true]);
