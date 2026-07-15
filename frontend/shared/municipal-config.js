@@ -25,6 +25,7 @@ export const municipalConfig = {
     },
     population: {
       status: contentStatuses.PUBLISHED,
+      summaryValidated: true,
       title: 'Población',
       total: '10,627 habitantes',
       urbanRural: 'Información pendiente de validación oficial',
@@ -34,6 +35,13 @@ export const municipalConfig = {
       year: '2022',
       note: 'Esta información corresponde específicamente a Laguna Salada y se presenta separada de los distritos municipales de Jaibón, La Caya y Cruce de Guayacanes.',
     },
+    territorialArea: {
+      status: contentStatuses.PUBLISHED,
+      summaryValidated: false,
+      valueKm2: '',
+      source: 'Pendiente de validación oficial',
+      year: '',
+    },
     economy: {
       status: contentStatuses.PUBLISHED,
       title: 'Economía',
@@ -41,6 +49,7 @@ export const municipalConfig = {
       agriculture: 'La actividad agrícola forma parte esencial de la vida productiva del municipio y continúa siendo uno de los ejes estratégicos para el crecimiento económico local.',
       commerce: 'El comercio local y los servicios de proximidad sostienen parte de la dinámica diaria del municipio.',
       productiveActivities: ['Agricultura', 'Comercio local', 'Servicios municipales y comunitarios'],
+      summaryValidated: true,
       employmentEntrepreneurship: 'El empleo y el emprendimiento local se describen de forma cualitativa hasta contar con estadísticas oficiales validadas.',
       opportunities: 'Oportunidades económicas pendientes de ampliación mediante planificación institucional y fuentes oficiales.',
       officialFigures: 'Información pendiente de validación oficial',
@@ -176,8 +185,9 @@ export const demoMunicipalConfig = {
   reportPolicy: { ...municipalConfig.reportPolicy, activeInstitutionSlug: 'demo-generico', demoGps: undefined },
   institutionalContent: {
     history: { status: contentStatuses.PUBLISHED, title: 'Historia del municipio', body: 'Información demo neutral pendiente de validación oficial.', source: 'Configuración demo.' },
-    population: { status: contentStatuses.PUBLISHED, title: 'Población', total: 'Información pendiente de validación oficial', urbanRural: 'Información pendiente de validación oficial', growth: 'Información pendiente de validación oficial', communities: [], source: 'Información pendiente de validación oficial', year: 'Pendiente' },
-    economy: { status: contentStatuses.PUBLISHED, title: 'Economía', generalDescription: 'Descripción demo neutral pendiente de validación oficial.', agriculture: 'Información pendiente de validación oficial', commerce: 'Información pendiente de validación oficial', productiveActivities: [], employmentEntrepreneurship: 'Información pendiente de validación oficial', opportunities: 'Información pendiente de validación oficial', officialFigures: 'Información pendiente de validación oficial', source: 'Información pendiente de validación oficial' },
+    population: { status: contentStatuses.PUBLISHED, title: 'Población', summaryValidated: false, total: 'Información pendiente de validación oficial', urbanRural: 'Información pendiente de validación oficial', growth: 'Información pendiente de validación oficial', communities: [], source: 'Información pendiente de validación oficial', year: 'Pendiente' },
+    territorialArea: { status: contentStatuses.PUBLISHED, summaryValidated: false, valueKm2: '', source: 'Información pendiente de validación oficial', year: 'Pendiente' },
+    economy: { status: contentStatuses.PUBLISHED, title: 'Economía', generalDescription: 'Descripción demo neutral pendiente de validación oficial.', agriculture: 'Información pendiente de validación oficial', commerce: 'Información pendiente de validación oficial', productiveActivities: [], summaryValidated: false, employmentEntrepreneurship: 'Información pendiente de validación oficial', opportunities: 'Información pendiente de validación oficial', officialFigures: 'Información pendiente de validación oficial', source: 'Información pendiente de validación oficial' },
     landmarks: [{ id: 'lugar-demo', status: contentStatuses.PUBLISHED, name: 'Lugar emblemático demo', photoUrl: './assets/placeholder-landmark.svg', description: 'Descripción demo pendiente de validación oficial.', importance: 'Información pendiente de validación oficial', location: 'Información pendiente de validación oficial' }],
     authorities: municipalConfig.institutionalContent.authorities,
     council: municipalConfig.institutionalContent.council,

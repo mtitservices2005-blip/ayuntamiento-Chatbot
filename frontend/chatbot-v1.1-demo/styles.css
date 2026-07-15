@@ -95,3 +95,81 @@ body {
   white-space: nowrap;
   border: 0;
 }
+
+.municipal-summary {
+  padding: 12px 14px 14px;
+  background: #f8fffc;
+  border-bottom: 1px solid rgba(7, 94, 84, 0.16);
+}
+.municipal-summary h2 {
+  margin: 0 0 10px;
+  color: var(--wa-green);
+  font-size: 16px;
+}
+.municipal-summary dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+.municipal-summary dl > div {
+  display: grid;
+  gap: 2px;
+  padding: 9px 10px;
+  background: #fff;
+  border: 1px solid rgba(7, 94, 84, 0.14);
+  border-radius: 12px;
+}
+.municipal-summary dt {
+  color: #49645f;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.municipal-summary dd {
+  margin: 0;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+}
+.municipal-summary .summary-meta {
+  color: #62756f;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+.quick-replies button:focus-visible,
+.composer button:focus-visible,
+.composer input:focus-visible {
+  outline: 3px solid #ffcf33;
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .quick-replies {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    width: 100%;
+  }
+  .quick-replies button {
+    width: 100%;
+    min-height: 52px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    text-align: center;
+  }
+}
+
+@media (min-width: 641px) {
+  .quick-replies {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .quick-replies button {
+    min-height: 48px;
+    border-radius: 14px;
+  }
+}
