@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Demo conversacional V1.1 | Chatbot Municipal</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="phone-shell" aria-label="Demo de chatbot municipal estilo WhatsApp">
+      <header class="chat-header">
+        <img id="municipal-logo" src="../../images/logo.png" alt="Logo municipal" />
+        <div>
+          <h1 id="municipal-name">Chatbot Municipal V1.1</h1>
+          <p>Experiencia ciudadana conversacional · WhatsApp-ready</p>
+        </div>
+      </header>
+
+      <section id="chat" class="chat" aria-live="polite"></section>
+
+      <footer class="composer" aria-label="Entrada de mensaje demo">
+        <input id="message-input" type="text" placeholder="Escribe tu mensaje..." autocomplete="off" />
+        <button id="send-button" type="button">Enviar</button>
+      </footer>
+    </main>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
