@@ -1,10 +1,13 @@
 {
   "id": "audit",
-  "name": "Audit",
+  "name": "Audit V2",
   "surface": "frontend",
   "route": "/audit",
   "owner": "Chatbot Municipal V2",
-  "status": "foundation",
+  "status": "demo",
   "dynamicEntry": "../modules/audit/index.js",
-  "permissions": []
+  "permissions": [
+    "visual_audit_demo"
+  ],
+  "demo": "./demo.html"
 }
